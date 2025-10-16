@@ -21,6 +21,38 @@ export default function Sidebar(){
   const [open,setOpen] = useState(true)
   const [expanded,setExpanded] = useState({})
 
+  function handleClick(title, children) {
+    setActive(title)
+    if (children) {
+      setExpanded(p => ({ ...p, [title]: !p[title] }))
+    } else {
+      // Navigate to the page
+      const hashMap = {
+        'Dashboard': '#/',
+        'Monthly Report': '#/reporting-monthly',
+        'Cash Report': '#/reporting-cash',
+        'Add Order': '#/add-order',
+        'View Orders': '#/view-orders',
+        'Market Creditors': '#/market-creditors',
+        'Payment Voucher': '#/payment-voucher',
+        'Add Customer': '#/add-customer',
+        'View Customers': '#/view-customers',
+        'View Suppliers': '#/suppliers',
+        'Supplier Ledger': '#/supplier-ledger',
+        'Employee': '#/employee',
+        'Expense': '#/expenses',
+        'View Quotation': '#/view-quotation',
+        'Add Quotation': '#/add-quotation',
+        'Opening Balance': '#/opening-balance',
+        'Products': '#/products',
+        'Low Stock': '#/low-stock',
+        'Users': '#/users',
+        'Customer Products': '#/customer-products'
+      }
+      window.location.hash = hashMap[title] || '#/'
+    }
+  }
+
   return (
     <aside className={`sidebar ${open? 'open':'closed'}`}>
       <div className="brand">
@@ -39,7 +71,7 @@ export default function Sidebar(){
           return true
         }).map(s=> (
           <div key={s.title} className={`nav-section ${active===s.title? 'active':''}`}>
-            <div className="nav-item" onClick={()=>{ setActive(s.title); if(s.children) setExpanded(p=>({...p,[s.title]:!p[s.title]})) }}>
+            <div className="nav-item" onClick={() => handleClick(s.title, s.children)}>
               <span className="nav-icon">{s.icon}</span>
               <span className="nav-title">{s.title}</span>
               {s.children? <span className={`chev ${expanded[s.title]? 'open':''}`}>▾</span>:null}
@@ -47,7 +79,7 @@ export default function Sidebar(){
 
             {s.children && expanded[s.title] && (
               <div className="subitems">
-                {s.children.map(c=> <div key={c} className={`subitem ${active===c? 'active':''}`} onClick={()=>setActive(c)}>{c}</div>)}
+                {s.children.map(c=> <div key={c} className={`subitem ${active===c? 'active':''}`} onClick={() => handleClick(c)}>{c}</div>)}
               </div>
             )}
           </div>
