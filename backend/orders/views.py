@@ -16,22 +16,39 @@ class AddOrderView(APIView):
         try:
             customer_id = data.get('customer')
             customer = Customer.objects.get(pk=customer_id)
+            from datetime import date
+            # safe coercions with defaults
+            def to_int(v, default=0):
+                try:
+                    return int(v)
+                except Exception:
+                    return default
+            def to_decimal(v, default=0):
+                try:
+                    from decimal import Decimal
+                    return Decimal(str(v))
+                except Exception:
+                    from decimal import Decimal
+                    return Decimal(default)
+
+            order_date = data.get('order_date') or date.today()
+
             order = Order.objects.create(
                 order_type=data.get('order_type', 'cash'),
                 customer=customer,
                 customer_cell=data.get('customer_cell', customer.phone),
-                order_date=data.get('order_date'),
+                order_date=order_date,
                 status=data.get('status', 'pending'),
-                total_items=data.get('total_items', 0),
-                total_bill=data.get('total_bill', 0),
-                net_bill=data.get('net_bill', 0),
-                tax=data.get('tax', 0),
-                discount=data.get('discount', 0),
-                received=data.get('received', 0),
-                balance=data.get('balance', 0),
+                total_items=to_int(data.get('total_items', 0)),
+                total_bill=to_decimal(data.get('total_bill', 0)),
+                net_bill=to_decimal(data.get('net_bill', 0)),
+                tax=to_decimal(data.get('tax', 0)),
+                discount=to_decimal(data.get('discount', 0)),
+                received=to_decimal(data.get('received', 0)),
+                balance=to_decimal(data.get('balance', 0)),
                 payment_method=data.get('payment_method'),
-                previous_balance=data.get('previous_balance', 0),
-                remaining_balance=data.get('remaining_balance', 0),
+                previous_balance=to_decimal(data.get('previous_balance', 0)),
+                remaining_balance=to_decimal(data.get('remaining_balance', 0)),
             )
 
             items = data.get('items', [])
@@ -98,10 +115,22 @@ class ViewOrdersView(APIView):
 
 class MarketCreditorsView(APIView):
     def get(self, request):
-        # Example: return orders with credit type and positive balance
-        creditors = Order.objects.filter(order_type='credit', balance__gt=0)
-        serializer = OrderSerializer(creditors, many=True)
-        return Response({'creditors': serializer.data}, status=status.HTTP_200_OK)
+        # Aggregate balances per customer for credit orders with positive balance
+        from django.db.models import Sum
+        creditors_qs = Order.objects.filter(order_type='credit', balance__gt=0).values(
+            'customer__name', 'customer__phone'
+        ).annotate(
+            balance=Sum('balance')
+        ).filter(balance__gt=0).order_by('customer__name')
+        creditors = [
+            {
+                'customer_name': c['customer__name'],
+                'customer_cell': c['customer__phone'],
+                'balance': str(c['balance'])
+            }
+            for c in creditors_qs
+        ]
+        return Response({'creditors': creditors}, status=status.HTTP_200_OK)
 
 
 class PaymentVoucherView(APIView):
@@ -109,6 +138,22 @@ class PaymentVoucherView(APIView):
         vouchers = PaymentVoucher.objects.all().order_by('-date')[:50]
         serializer = PaymentVoucherSerializer(vouchers, many=True)
         return Response({'vouchers': serializer.data}, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        data = request.data
+        try:
+            voucher = PaymentVoucher.objects.create(
+                voucher_no=data.get('voucher_no'),
+                type=data.get('type'),
+                payment_method=data.get('payment_method'),
+                amount=data.get('amount'),
+                description=data.get('description'),
+                date=data.get('date'),
+            )
+            serializer = PaymentVoucherSerializer(voucher)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UpdateOrderView(APIView):

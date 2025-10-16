@@ -12,8 +12,16 @@ class ViewSuppliersView(APIView):
 
 class SupplierLedgerView(APIView):
     def get(self, request):
-        # Logic to get supplier ledger
-        return Response({'ledger': []}, status=status.HTTP_200_OK)
+        supplier_id = request.query_params.get('supplier_id')
+        if not supplier_id:
+            return Response({'error': 'supplier_id required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            supplier = Supplier.objects.get(pk=int(supplier_id))
+        except Supplier.DoesNotExist:
+            return Response({'error': 'Supplier not found'}, status=status.HTTP_404_NOT_FOUND)
+        # Placeholder for ledger logic - return empty for now
+        ledger = []
+        return Response({'ledger': ledger, 'supplier': {'id': supplier.id, 'name': supplier.name}}, status=status.HTTP_200_OK)
 
 class AddSupplierView(APIView):
     def post(self, request):

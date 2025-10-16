@@ -27,9 +27,13 @@ export default function ViewOrders(){
     (!q.to || (o.order_date && o.order_date <= q.to))
   ))
 
+  // quick debug so you can see this file updated in the editor and the UI
+  useEffect(()=>{ console.log('ViewOrders mounted, orders count:', meta.count) },[meta.count])
+
   return (
     <div className="card">
       <h3>View Orders</h3>
+      <div className="sub">Orders in system: <strong>{meta.count}</strong></div>
       <div className="form-row">
         <input placeholder="Customer Name" value={q.customer} onChange={e=>setQ({...q,customer:e.target.value})} />
         <select value={q.status} onChange={e=>setQ({...q,status:e.target.value})}>

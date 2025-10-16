@@ -1,10 +1,11 @@
 import React, {useEffect, useState} from 'react'
+import fetchWithAuth from '../auth/fetchWithAuth'
 
 export default function MarketCreditors(){
   const [creditors,setCreditors] = useState([])
 
   useEffect(()=>{
-    fetch('/api/orders/market-creditors/').then(r=>r.json()).then(d=>setCreditors(d.creditors||[])).catch(()=>{})
+    fetchWithAuth('/api/orders/market-creditors/').then(r=>r.json()).then(d=>setCreditors(d.creditors||[])).catch(()=>{})
   },[])
 
   const total = creditors.reduce((s,c)=> s + Number(c.balance||0), 0)

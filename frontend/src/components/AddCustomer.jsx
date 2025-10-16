@@ -1,5 +1,6 @@
 import React, {useState} from 'react'
 import Modal from './Modal'
+import fetchWithAuth from '../auth/fetchWithAuth'
 
 export default function AddCustomer({setCustomers}){
   const [form, setForm] = useState({name:'',email:'',phone:'',type:'cash',opening_balance:0})
@@ -7,6 +8,7 @@ export default function AddCustomer({setCustomers}){
   const [msg, setMsg] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   function validate(){
     const e = {}
@@ -31,7 +33,7 @@ export default function AddCustomer({setCustomers}){
         <div className="form-row"><label>Phone</label><input value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} /><div className="error">{errors.phone}</div></div>
         <div className="form-row"><label>Email</label><input value={form.email} onChange={e=>setForm({...form,email:e.target.value})} /></div>
         <div className="form-row"><label>Type</label><select value={form.type} onChange={e=>setForm({...form,type:e.target.value})}><option value="cash">Cash</option><option value="credit">Credit</option></select></div>
-        <div className="form-row"><button type="submit" className="btn primary">Add Customer</button></div>
+        <div className="form-row"><button type="submit" className="btn primary" disabled={loading}>{loading ? 'Adding...' : 'Add Customer'}</button></div>
       </form>
       <div className="msg">{msg}</div>
 
@@ -47,8 +49,9 @@ export default function AddCustomer({setCustomers}){
           onClose={()=>setConfirming(false)}
           onConfirm={async ()=>{
             setConfirming(false)
+            setLoading(true)
             try{
-              const r = await fetch('/api/customers/add/',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) })
+              const r = await fetchWithAuth('/api/customers/add/',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) })
               const d = await r.json()
               if(r.ok && d.id){
                 setMsg('')
@@ -62,6 +65,7 @@ export default function AddCustomer({setCustomers}){
                 else setMsg(String(d))
               }
             }catch(err){ setMsg(String(err)) }
+            setLoading(false)
           }}
           confirmText="Create"
         >

@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react'
+import fetchWithAuth from '../auth/fetchWithAuth'
 
 export default function ViewCustomers(){
   const [customers,setCustomers] = useState([])
@@ -6,12 +7,14 @@ export default function ViewCustomers(){
   const [q,setQ] = useState('')
   const [edit,setEdit] = useState(null)
   const [errors,setErrors] = useState({})
+  const [loading, setLoading] = useState(false)
 
   useEffect(()=>{ refresh() },[])
 
   function refresh(){
+    setLoading(true)
     const params = new URLSearchParams({ page: meta.page, page_size: meta.page_size })
-    fetch('/api/customers/view/?'+params.toString()).then(r=>r.json()).then(d=>{ setCustomers(d.customers||[]); if(d.count!==undefined) setMeta({count:d.count,page:d.page,page_size:d.page_size}) }).catch(()=>{})
+    fetchWithAuth('/api/customers/view/?'+params.toString()).then(r=>r.json()).then(d=>{ setCustomers(d.customers||[]); if(d.count!==undefined) setMeta({count:d.count,page:d.page,page_size:d.page_size}) }).catch(()=>{}).finally(()=>setLoading(false))
   }
 
   const filtered = customers.filter(c=> (c.name||'').toLowerCase().includes(q.toLowerCase()))
@@ -23,6 +26,7 @@ export default function ViewCustomers(){
         <input placeholder="Search name" value={q} onChange={e=>setQ(e.target.value)} />
         <button className="btn" onClick={()=> window.open('/api/customers/view/?format=csv','_blank')}>Export CSV</button>
       </div>
+      {loading && <div>Loading...</div>}
       <div className="table-wrap">
         <table>
           <thead><tr><th>Sr.No</th><th>Name</th><th>Type</th><th>Contact</th><th>Email</th><th>Actions</th></tr></thead>
@@ -32,7 +36,7 @@ export default function ViewCustomers(){
                 <td>{i+1}</td><td>{c.name}</td><td>{c.type}</td><td>{c.phone}</td><td>{c.email}</td>
                 <td>
                   <button className="btn small" onClick={()=>setEdit(c)}>Edit</button>
-                  <button className="btn small" onClick={async ()=>{ await fetch('/api/customers/add/',{ method:'DELETE', headers:{'Content-Type':'application/json','X-Admin':'true'}, body: JSON.stringify({id:c.id}) }); refresh() }}>Delete</button>
+                  <button className="btn small" onClick={async ()=>{ await fetchWithAuth('/api/customers/add/',{ method:'DELETE', headers:{'Content-Type':'application/json','X-Admin':'true'}, body: JSON.stringify({id:c.id}) }); refresh() }}>Delete</button>
                 </td>
               </tr>
             ))}
@@ -48,7 +52,7 @@ export default function ViewCustomers(){
           <div className="form-row"><input placeholder="Email" value={edit.email||''} onChange={e=>setEdit({...edit,email:e.target.value})} /></div>
           <div className="form-row"><select value={edit.type||'cash'} onChange={e=>setEdit({...edit,type:e.target.value})}><option value="cash">Cash</option><option value="credit">Credit</option></select></div>
           <div className="form-row">
-            <button className="btn primary" onClick={async ()=>{ const r=await fetch('/api/customers/add/',{ method:'PUT', headers:{'Content-Type':'application/json','X-Admin':'true'}, body: JSON.stringify(edit) }); const d=await r.json(); if(r.ok){ setEdit(null); refresh() } else { setErrors(d) } }}>Save</button>
+            <button className="btn primary" onClick={async ()=>{ const r=await fetchWithAuth('/api/customers/add/',{ method:'PUT', headers:{'Content-Type':'application/json','X-Admin':'true'}, body: JSON.stringify(edit) }); const d=await r.json(); if(r.ok){ setEdit(null); refresh() } else { setErrors(d) } }}>Save</button>
             <button className="btn" onClick={()=>setEdit(null)}>Cancel</button>
           </div>
           <div className="error">{errors && JSON.stringify(errors)}</div>
