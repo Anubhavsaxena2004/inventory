@@ -42,6 +42,7 @@ export default function App(){
   const { user, logout } = useContext(AuthContext)
   const [creditors, setCreditors] = useState([])
   const [latestExpenses, setLatestExpenses] = useState([])
+  const [currentHash, setCurrentHash] = useState(window.location.hash || '#/')
 
   useEffect(()=>{
     fetch('/api/orders/view/')
@@ -67,9 +68,15 @@ export default function App(){
       .catch(()=>{})
   },[])
 
+  useEffect(()=>{
+    const onHash = ()=> setCurrentHash(window.location.hash || '#/')
+    window.addEventListener('hashchange', onHash)
+    return ()=> window.removeEventListener('hashchange', onHash)
+  },[])
+
   return (
     <div className="app-shell">
-      <Sidebar />
+      <Sidebar currentHash={currentHash} />
       <main className="main-content">
         <nav style={{marginBottom:12}}>
           <a href="#/">Dashboard</a> | <a href="#/add-customer">Add Customer</a> | <a href="#/add-order">Add Order</a> | <a href="#/view-orders">View Orders</a> | <a href="#/market-creditors">Market Creditors</a> | <a href="#/payment-voucher">Payment Voucher</a>

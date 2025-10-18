@@ -14,12 +14,54 @@ const sections = [
   { title: 'Settings', icon: '⚙️', children: ['Opening Balance', 'Products', 'Low Stock', 'Users', 'Customer Products'] },
 ]
 
-export default function Sidebar(){
+export default function Sidebar({ currentHash }){
   const { user } = useContext(AuthContext)
   const isAdmin = user?.is_admin
-  const [active,setActive] = useState('Dashboard')
   const [open,setOpen] = useState(true)
+  // derive active from currentHash when provided
+  const hashToTitle = {
+    '#/': 'Dashboard',
+    '#/reporting-monthly': 'Monthly Report',
+    '#/reporting-cash': 'Cash Report',
+    '#/add-order': 'Add Order',
+    '#/view-orders': 'View Orders',
+    '#/market-creditors': 'Market Creditors',
+    '#/payment-voucher': 'Payment Voucher',
+    '#/add-customer': 'Add Customer',
+    '#/view-customers': 'View Customers',
+    '#/suppliers': 'View Suppliers',
+    '#/supplier-ledger': 'Supplier Ledger',
+    '#/employee': 'Employee',
+    '#/expenses': 'Expense',
+    '#/view-quotation': 'View Quotation',
+    '#/add-quotation': 'Add Quotation',
+    '#/opening-balance': 'Opening Balance',
+    '#/products': 'Products',
+    '#/low-stock': 'Low Stock',
+    '#/users': 'Users',
+    '#/customer-products': 'Customer Products'
+  }
+  const [active,setActive] = useState(hashToTitle[currentHash || '#/'] || 'Dashboard')
   const [expanded,setExpanded] = useState({})
+
+  // keep active synced when hash changes
+  React.useEffect(()=>{
+    if(currentHash){
+      const t = hashToTitle[currentHash] || 'Dashboard'
+      setActive(t)
+      // expand parent section if it's a submenu
+      const parentMap = {
+        'Monthly Report':'Reporting', 'Cash Report':'Reporting',
+        'Add Order':'Orders','View Orders':'Orders','Market Creditors':'Orders','Payment Voucher':'Orders',
+        'Add Customer':'Customers','View Customers':'Customers',
+        'View Suppliers':'Suppliers','Supplier Ledger':'Suppliers',
+        'View Quotation':'Quotation','Add Quotation':'Quotation',
+        'Opening Balance':'Settings','Products':'Settings','Low Stock':'Settings','Users':'Settings','Customer Products':'Settings'
+      }
+      const p = parentMap[t]
+      if(p) setExpanded(prev=>({ ...prev, [p]: true }))
+    }
+  },[currentHash])
 
   function handleClick(title, children) {
     setActive(title)

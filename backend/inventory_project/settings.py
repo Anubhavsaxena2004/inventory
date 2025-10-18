@@ -139,9 +139,15 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5175",
+    "http://127.0.0.1:5175",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 ]
+
+# During local development it's convenient to allow all origins to avoid CORS issues
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
 
 # Allow common CORS headers (helpful during dev)
 CORS_ALLOW_HEADERS = [
