@@ -14,6 +14,7 @@ export default function AddCustomer({setCustomers}){
     const e = {}
     if(!form.name) e.name = 'Name is required'
     if(form.phone && form.phone.length < 6) e.phone = 'Phone seems short'
+    if(form.email && !form.email.includes('@')) e.email = 'Invalid email format'
     return e
   }
 
@@ -31,7 +32,7 @@ export default function AddCustomer({setCustomers}){
       <form onSubmit={submit}>
         <div className="form-row"><label>Name</label><input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} /><div className="error">{errors.name}</div></div>
         <div className="form-row"><label>Phone</label><input value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} /><div className="error">{errors.phone}</div></div>
-        <div className="form-row"><label>Email</label><input value={form.email} onChange={e=>setForm({...form,email:e.target.value})} /></div>
+        <div className="form-row"><label>Email</label><input value={form.email} onChange={e=>setForm({...form,email:e.target.value})} /><div className="error">{errors.email}</div></div>
         <div className="form-row"><label>Type</label><select value={form.type} onChange={e=>setForm({...form,type:e.target.value})}><option value="cash">Cash</option><option value="credit">Credit</option></select></div>
         <div className="form-row"><button type="submit" className="btn primary" disabled={loading}>{loading ? 'Adding...' : 'Add Customer'}</button></div>
       </form>
@@ -56,15 +57,31 @@ export default function AddCustomer({setCustomers}){
               if(r.ok && d.id){
                 setMsg('')
                 setShowSuccess(true)
-                const newCust = {id: d.id, name: form.name, phone: form.phone}
+                const newCust = {id: d.id, name: form.name, phone: form.phone, email: form.email, type: form.type}
                 if(typeof setCustomers === 'function') setCustomers(prev=>[newCust, ...prev])
                 setForm({name:'',email:'',phone:'',type:'cash',opening_balance:0})
                 setErrors({})
               } else {
-                if(d && typeof d === 'object') setErrors(d)
-                else setMsg(String(d))
+                console.error('API Error:', d)
+                if(d && typeof d === 'object') {
+                  // Handle field-specific errors
+                  if(d.name) setErrors({name: d.name[0]})
+                  if(d.email) setErrors({email: d.email[0]})
+                  if(d.phone) setErrors({phone: d.phone[0]})
+                  if(d.type) setErrors({type: d.type[0]})
+                  if(d.opening_balance) setErrors({opening_balance: d.opening_balance[0]})
+                  // If no specific field errors, show general error
+                  if(!Object.keys(d).some(key => ['name', 'email', 'phone', 'type', 'opening_balance'].includes(key))) {
+                    setMsg(d.error || d.detail || 'Failed to add customer')
+                  }
+                } else {
+                  setMsg(String(d))
+                }
               }
-            }catch(err){ setMsg(String(err)) }
+            }catch(err){ 
+              console.error('Network Error:', err)
+              setMsg('Network error: ' + String(err)) 
+            }
             setLoading(false)
           }}
           confirmText="Create"

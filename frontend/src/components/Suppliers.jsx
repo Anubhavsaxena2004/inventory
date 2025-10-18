@@ -51,7 +51,7 @@ export default function Suppliers(){
               <tr key={s.id||s.name}><td>{s.name}</td><td>{s.phone}</td><td>{s.email}</td><td>{s.address}</td>
                 <td>
                   <button className="btn small" onClick={()=>{ setEditing(s.id); setForm({name:s.name||'',phone:s.phone||'',email:s.email||'',address:s.address||''}) }}>Edit</button>
-                  <button className="btn small" onClick={async ()=>{ await fetchWithAuth('/api/suppliers/add/',{ method:'DELETE', headers:{'Content-Type':'application/json','X-Admin':'true'}, body: JSON.stringify({id:s.id}) }); refresh() }}>Delete</button>
+                  <button className="btn small" onClick={()=>{ if(confirm('Delete this supplier?')) { fetchWithAuth('/api/suppliers/add/',{ method:'DELETE', headers:{'Content-Type':'application/json','X-Admin':'true'}, body: JSON.stringify({id:s.id}) }).then(refresh) } }}>Delete</button>
                 </td>
               </tr>
             ))}

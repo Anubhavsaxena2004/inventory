@@ -11,3 +11,4 @@ class QuotationItem(models.Model):
     description = models.TextField()
     rate = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.IntegerField()
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)

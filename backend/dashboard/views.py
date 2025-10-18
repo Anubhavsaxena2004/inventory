@@ -21,10 +21,10 @@ class DashboardStatsView(APIView):
         working_orders = Order.objects.filter(status='working').count()
 
         # Latest pending orders
-        latest_pending = Order.objects.filter(status='pending').order_by('-date')[:5].values('id', 'customer__name', 'total_bill', 'date')
+        latest_pending = Order.objects.filter(status='pending').order_by('-order_date')[:5].values('id', 'customer__name', 'total_bill', 'order_date')
 
         # Latest completed orders
-        latest_completed = Order.objects.filter(status='completed').order_by('-date')[:5].values('id', 'customer__name', 'total_bill', 'date')
+        latest_completed = Order.objects.filter(status='completed').order_by('-order_date')[:5].values('id', 'customer__name', 'total_bill', 'order_date')
 
         # New Market Orders (creditors)
         market_orders = Customer.objects.filter(type='credit').order_by('-created_at')[:5].values('name', 'balance', 'created_at')

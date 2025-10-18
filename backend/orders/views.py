@@ -135,7 +135,7 @@ class MarketCreditorsView(APIView):
 
 class PaymentVoucherView(APIView):
     def get(self, request):
-        vouchers = PaymentVoucher.objects.all().order_by('-date')[:50]
+        vouchers = PaymentVoucher.objects.all().order_by('-date')
         serializer = PaymentVoucherSerializer(vouchers, many=True)
         return Response({'vouchers': serializer.data}, status=status.HTTP_200_OK)
 
@@ -155,6 +155,28 @@ class PaymentVoucherView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    def put(self, request):
+        voucher_id = request.data.get('id')
+        try:
+            voucher = PaymentVoucher.objects.get(pk=voucher_id)
+            for f in ['voucher_no','type','payment_method','amount','description','date']:
+                if f in request.data:
+                    setattr(voucher, f, request.data.get(f))
+            voucher.save()
+            serializer = PaymentVoucherSerializer(voucher)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except PaymentVoucher.DoesNotExist:
+            return Response({'error': 'Voucher not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request):
+        voucher_id = request.data.get('id')
+        try:
+            voucher = PaymentVoucher.objects.get(pk=voucher_id)
+            voucher.delete()
+            return Response({'deleted': True}, status=status.HTTP_200_OK)
+        except PaymentVoucher.DoesNotExist:
+            return Response({'error': 'Voucher not found'}, status=status.HTTP_404_NOT_FOUND)
+
 
 class UpdateOrderView(APIView):
     def put(self, request):
@@ -167,8 +189,18 @@ class UpdateOrderView(APIView):
             return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
         # Only allow certain fields to be updated inline
         allowed = {k: request.data.get(k) for k in ['status', 'payment_method', 'received'] if k in request.data}
+        def to_decimal(v, default=0):
+            try:
+                from decimal import Decimal
+                return Decimal(str(v))
+            except Exception:
+                from decimal import Decimal
+                return Decimal(default)
         for k,v in allowed.items():
-            setattr(order, k, v)
+            if k == 'received':
+                setattr(order, k, to_decimal(v))
+            else:
+                setattr(order, k, v)
         if 'received' in allowed:
             try:
                 order.balance = (order.net_bill - order.received)

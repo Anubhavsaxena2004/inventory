@@ -23,7 +23,8 @@ class AddQuotationView(APIView):
             return Response({'error': 'Customer not found'}, status=status.HTTP_400_BAD_REQUEST)
         q = Quotation.objects.create(customer=customer, customer_email=request.data.get('customer_email'), date=request.data.get('date'))
         for it in request.data.get('items', []):
-            QuotationItem.objects.create(quotation=q, description=it.get('description',''), rate=it.get('rate',0), quantity=it.get('quantity',1))
+            amount = float(it.get('rate', 0)) * float(it.get('quantity', 1))
+            QuotationItem.objects.create(quotation=q, description=it.get('description',''), rate=it.get('rate',0), quantity=it.get('quantity',1), amount=amount)
         return Response({'id': q.id}, status=status.HTTP_201_CREATED)
 
     def put(self, request):
@@ -46,7 +47,8 @@ class AddQuotationView(APIView):
         if 'items' in request.data:
             q.items.all().delete()
             for it in request.data.get('items', []):
-                QuotationItem.objects.create(quotation=q, description=it.get('description',''), rate=it.get('rate',0), quantity=it.get('quantity',1))
+                amount = float(it.get('rate', 0)) * float(it.get('quantity', 1))
+                QuotationItem.objects.create(quotation=q, description=it.get('description',''), rate=it.get('rate',0), quantity=it.get('quantity',1), amount=amount)
         return Response({'id': q.id}, status=status.HTTP_200_OK)
 
     def delete(self, request):

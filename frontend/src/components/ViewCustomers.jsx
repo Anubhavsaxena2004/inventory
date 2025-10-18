@@ -36,7 +36,7 @@ export default function ViewCustomers(){
                 <td>{i+1}</td><td>{c.name}</td><td>{c.type}</td><td>{c.phone}</td><td>{c.email}</td>
                 <td>
                   <button className="btn small" onClick={()=>setEdit(c)}>Edit</button>
-                  <button className="btn small" onClick={async ()=>{ await fetchWithAuth('/api/customers/add/',{ method:'DELETE', headers:{'Content-Type':'application/json','X-Admin':'true'}, body: JSON.stringify({id:c.id}) }); refresh() }}>Delete</button>
+                  <button className="btn small" onClick={()=>{ if(confirm('Delete this customer?')) { fetchWithAuth('/api/customers/add/',{ method:'DELETE', headers:{'Content-Type':'application/json','X-Admin':'true'}, body: JSON.stringify({id:c.id}) }).then(refresh) } }}>Delete</button>
                 </td>
               </tr>
             ))}
