@@ -19,14 +19,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Node.js for building frontend
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs
+    apt-get install -y nodejs && \
+    npm install -g npm@latest
 
 # Copy project files
 COPY . .
 
 # Build frontend
 WORKDIR /app/frontend
-RUN npm install && npm run build
+RUN npm install
+RUN npx vite build
 
 # Move built frontend to backend static files
 RUN mkdir -p /app/backend/static && cp -r dist/* /app/backend/static/
