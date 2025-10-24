@@ -27,7 +27,7 @@ COPY . .
 # Build frontend
 WORKDIR /app/frontend
 RUN npm install
-RUN ./node_modules/.bin/vite build
+RUN chmod +x ./node_modules/.bin/vite && ./node_modules/.bin/vite build
 
 # Move built frontend to backend static files
 RUN mkdir -p /app/backend/static && cp -r dist/* /app/backend/static/
