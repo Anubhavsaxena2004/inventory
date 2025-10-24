@@ -20,12 +20,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-*#()$$lczoxoy9_lbzsnk7)ckx*c&10_yhb#*4y#)@qrvhpi%z'
+import os
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-*#()$$lczoxoy9_lbzsnk7)ckx*c&10_yhb#*4y#)@qrvhpi%z')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') if os.environ.get('ALLOWED_HOSTS') else ['*']
 
 
 # Application definition
@@ -148,6 +149,11 @@ CORS_ALLOWED_ORIGINS = [
 # During local development it's convenient to allow all origins to avoid CORS issues
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
+else:
+    # In production, allow the frontend origin if set
+    frontend_origin = os.environ.get('FRONTEND_ORIGIN')
+    if frontend_origin:
+        CORS_ALLOWED_ORIGINS.append(frontend_origin)
 
 # Allow common CORS headers (helpful during dev)
 CORS_ALLOW_HEADERS = [

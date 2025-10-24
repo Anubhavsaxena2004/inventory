@@ -32,3 +32,6 @@ def me_view(request):
         return JsonResponse({'error': 'Unauthorized'}, status=401)
     return JsonResponse({'user': payload})
 
+def health_check(request):
+    return JsonResponse({'status': 'ok'})
+

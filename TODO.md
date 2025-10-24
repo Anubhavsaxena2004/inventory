@@ -1,15 +1,9 @@
-# TODO List for Inventory System Fixes and Enhancements
+# TODO: Deploy on Render
 
-## Quotation Fixes
-- [x] Add amount field to QuotationItem model
-- [x] Update backend to save amount in QuotationItem
-
-## Suppliers Fixes
-- [x] Add 'X-Admin':'true' header to delete action in Suppliers.jsx
-
-## View Customers Fixes
-- [x] Add 'X-Admin':'true' header to delete action in ViewCustomers.jsx
-
-## View Orders Fixes
-- [x] Add 'X-Admin':'true' header to update action in ViewOrders.jsx
-- [x] Add 'X-Admin':'true' header to delete action in ViewOrders.jsx
+- [x] Update backend settings for production (DEBUG=False, ALLOWED_HOSTS, SECRET_KEY from env)
+- [x] Add health check endpoint in backend
+- [x] Create Dockerfile to combine frontend and backend
+- [ ] Build Docker image locally (Docker not running)
+- [ ] Fill Render form details
+- [ ] Deploy on Render
+- [ ] Test deployment
