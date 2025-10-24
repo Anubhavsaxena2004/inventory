@@ -42,6 +42,8 @@ class FrontendAppView(View):
     def get(self, request):
         index_path = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
         if os.path.exists(index_path):
-            return FileResponse(open(index_path, 'rb'))
-        return FileResponse(b"index.html not found", status=404)
+            with open(index_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            return HttpResponse(content, content_type='text/html')
+        return HttpResponse("index.html not found", status=404)
 
