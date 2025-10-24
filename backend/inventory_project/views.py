@@ -2,6 +2,7 @@ from django.http import JsonResponse, FileResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.generic import View
 import json
 import os
 from settings_app.models import User
