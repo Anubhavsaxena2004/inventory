@@ -20,7 +20,7 @@ COPY . .
 # Build frontend
 WORKDIR /app/frontend
 RUN npm install
-RUN npx vite build
+RUN chmod +x ./node_modules/.bin/vite && npx vite build
 
 # Copy built frontend to Django static dir
 RUN mkdir -p /app/backend/static && cp -r dist/* /app/backend/static/
