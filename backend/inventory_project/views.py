@@ -1,7 +1,9 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.views import View
 import json
+import os
 from settings_app.models import User
 from .auth_utils import generate_jwt, get_auth_payload_from_request
 
@@ -34,4 +36,11 @@ def me_view(request):
 
 def health_check(request):
     return JsonResponse({'status': 'ok'})
+
+class FrontendAppView(View):
+    def get(self, request):
+        index_path = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
+        if os.path.exists(index_path):
+            return FileResponse(open(index_path, 'rb'))
+        return FileResponse(b"index.html not found", status=404)
 
