@@ -36,6 +36,8 @@ urlpatterns = [
     path('healthz/', root_views.health_check),
     # Serve static files in production
     re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
+    # Serve React assets
+    re_path(r'^assets/(?P<path>.*)$', serve, {'document_root': settings.BASE_DIR / 'static'}),
     # Catch-all pattern to serve the React app
     re_path(r'^(?!api/).*$', serve, {'document_root': settings.BASE_DIR / 'static', 'path': 'index.html'}),
 ]
