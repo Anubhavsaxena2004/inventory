@@ -15,7 +15,9 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from django.views.static import serve
+from django.conf import settings
 from . import views as root_views
 
 urlpatterns = [
@@ -32,4 +34,8 @@ urlpatterns = [
     path('api/auth/login/', root_views.login_view),
     path('api/auth/me/', root_views.me_view),
     path('healthz/', root_views.health_check),
+    # Serve static files in production
+    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
+    # Catch-all pattern to serve the React app
+    re_path(r'^(?!api/).*$', serve, {'document_root': settings.BASE_DIR / 'static', 'path': 'index.html'}),
 ]

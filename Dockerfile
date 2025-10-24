@@ -38,5 +38,5 @@ WORKDIR /app/backend
 # Expose port
 EXPOSE 8000
 
-# Run migrations and start server
-CMD ["sh", "-c", "python manage.py migrate && gunicorn inventory_project.wsgi:application --bind 0.0.0.0:8000"]
+# Collect static files and run migrations and start server
+CMD ["sh", "-c", "python manage.py collectstatic --noinput && python manage.py migrate && gunicorn inventory_project.wsgi:application --bind 0.0.0.0:8000"]
