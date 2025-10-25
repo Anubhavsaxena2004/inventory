@@ -17,6 +17,7 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ['id', 'order_type', 'customer', 'customer_name', 'customer_cell', 'order_date', 'status', 'total_items', 'total_bill', 'net_bill', 'tax', 'discount', 'received', 'balance', 'payment_method', 'previous_balance', 'remaining_balance', 'items']
 
 class PaymentVoucherSerializer(serializers.ModelSerializer):
+    supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     class Meta:
         model = PaymentVoucher
-        fields = ['id', 'voucher_no', 'type', 'payment_method', 'amount', 'description', 'date']
+        fields = ['id', 'voucher_no', 'type', 'payment_method', 'amount', 'description', 'date', 'supplier', 'supplier_name']

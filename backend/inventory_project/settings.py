@@ -171,6 +171,7 @@ CORS_ALLOW_HEADERS = [
     'content-type',
     'x-requested-with',
     'x-csrftoken',
+    'x-admin',
 ]
 
 CORS_ALLOW_METHODS = [

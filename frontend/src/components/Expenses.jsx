@@ -1,18 +1,24 @@
 import React, {useEffect, useState} from 'react'
 import Modal from './Modal'
+import fetchWithAuth from '../auth/fetchWithAuth'
 
 export default function Expenses(){
   const [expenses,setExpenses] = useState([])
-  const [form,setForm] = useState({type:'Misc', amount:'', description:'', date:''})
+  const [suppliers,setSuppliers] = useState([])
+  const [form,setForm] = useState({type:'Misc', amount:'', description:'', date:'', supplier:''})
   const [errors,setErrors] = useState({})
   const [msg,setMsg] = useState('')
   const [confirming,setConfirming] = useState(false)
   const [editingId,setEditingId] = useState(null)
 
-  useEffect(()=>{ refresh() },[])
+  useEffect(()=>{ refresh(); fetchSuppliers() },[])
 
   function refresh(){
-    fetch('/api/expense/list/').then(r=>r.json()).then(d=>setExpenses(d.expenses||[])).catch(e=>setMsg(String(e)))
+    fetchWithAuth('/api/expense/list/').then(r=>r.json()).then(d=>setExpenses(d.expenses||[])).catch(e=>setMsg(String(e)))
+  }
+
+  function fetchSuppliers(){
+    fetchWithAuth('/api/suppliers/view/').then(r=>r.json()).then(d=>setSuppliers(d.suppliers||[])).catch(()=>{})
   }
 
   function validate(){
@@ -46,6 +52,13 @@ export default function Expenses(){
           <input value={form.description} onChange={e=>setForm({...form,description:e.target.value})} />
         </div>
         <div className="form-row">
+          <label>Supplier</label>
+          <select value={form.supplier} onChange={e=>setForm({...form,supplier:e.target.value})}>
+            <option value="">Select Supplier (optional)</option>
+            {suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
+        <div className="form-row">
           <label>Date</label>
           <input type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value})} />
           <div className="error">{errors.date}</div>
@@ -74,10 +87,10 @@ export default function Expenses(){
             setConfirming(false)
             try{
               const method = editingId? 'PUT':'POST'
-              const body = editingId? { id: editingId, ...form, amount: Number(form.amount)} : { ...form, amount: Number(form.amount)}
+              const body = editingId? { id: editingId, ...form, amount: Number(form.amount), supplier: form.supplier || null} : { ...form, amount: Number(form.amount), supplier: form.supplier || null}
               const r = await fetch('/api/expense/new/',{ method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
               const d = await r.json()
-              if(r.ok){ setMsg(''); setForm({type:'Misc', amount:'', description:'', date:''}); setErrors({}); setEditingId(null); refresh() }
+              if(r.ok){ setMsg(''); setForm({type:'Misc', amount:'', description:'', date:'', supplier:''}); setErrors({}); setEditingId(null); refresh() }
               else { if(d && typeof d==='object') setErrors(d); else setMsg(String(d)) }
             }catch(err){ setMsg(String(err)) }
           }}

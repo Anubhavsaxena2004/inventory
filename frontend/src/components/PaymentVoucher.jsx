@@ -5,7 +5,8 @@ import Modal from './Modal'
 export default function PaymentVoucher(){
   const [vouchers,setVouchers] = useState([])
   const [filteredVouchers,setFilteredVouchers] = useState([])
-  const [form,setForm] = useState({voucher_no:'', type:'receipt', payment_method:'cash', amount:'', description:'', date:''})
+  const [suppliers,setSuppliers] = useState([])
+  const [form,setForm] = useState({voucher_no:'', type:'receipt', payment_method:'cash', amount:'', description:'', date:'', supplier:''})
   const [loading,setLoading] = useState(false)
   const [editing,setEditing] = useState(null)
   const [deleting,setDeleting] = useState(null)
@@ -15,7 +16,12 @@ export default function PaymentVoucher(){
 
   useEffect(()=>{
     fetchVouchers()
+    fetchSuppliers()
   },[])
+
+  function fetchSuppliers(){
+    fetchWithAuth('/api/suppliers/view/').then(r=>r.json()).then(d=>setSuppliers(d.suppliers||[])).catch(()=>{})
+  }
 
   useEffect(()=>{
     setFilteredVouchers(vouchers.filter(v=> !search || v.description.toLowerCase().includes(search.toLowerCase()) || (v.voucher_no && v.voucher_no.toLowerCase().includes(search.toLowerCase()))))
@@ -42,7 +48,7 @@ export default function PaymentVoucher(){
         }else{
           setVouchers([updated, ...vouchers])
         }
-        setForm({voucher_no:'', type:'receipt', payment_method:'cash', amount:'', description:'', date:''})
+        setForm({voucher_no:'', type:'receipt', payment_method:'cash', amount:'', description:'', date:'', supplier:''})
         setEditing(null)
       } else {
         alert('Error saving voucher')
@@ -55,7 +61,7 @@ export default function PaymentVoucher(){
 
   function startEdit(v){
     setEditing(v)
-    setForm({voucher_no:v.voucher_no||'', type:v.type, payment_method:v.payment_method, amount:v.amount, description:v.description, date:v.date})
+    setForm({voucher_no:v.voucher_no||'', type:v.type, payment_method:v.payment_method, amount:v.amount, description:v.description, date:v.date, supplier:v.supplier || ''})
   }
 
   async function deleteVoucher(){
@@ -85,8 +91,12 @@ export default function PaymentVoucher(){
         <input type="number" placeholder="Amount" value={form.amount} onChange={e=>setForm({...form,amount:e.target.value})} required />
         <input placeholder="Description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})} required />
         <input type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value})} required />
+        <select value={form.supplier} onChange={e=>setForm({...form,supplier:e.target.value})}>
+          <option value="">Select Supplier (optional)</option>
+          {suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
         <button className="btn" type="submit" disabled={loading}>{loading ? 'Saving...' : editing ? 'Update Voucher' : 'Create Voucher'}</button>
-        {editing && <button className="btn" type="button" onClick={()=>{setEditing(null); setForm({voucher_no:'', type:'receipt', payment_method:'cash', amount:'', description:'', date:''})}}>Cancel</button>}
+        {editing && <button className="btn" type="button" onClick={()=>{setEditing(null); setForm({voucher_no:'', type:'receipt', payment_method:'cash', amount:'', description:'', date:'', supplier:''})}}>Cancel</button>}
       </form>
       <div className="form-row">
         <input placeholder="Search by Voucher No or Description" value={search} onChange={e=>setSearch(e.target.value)} />

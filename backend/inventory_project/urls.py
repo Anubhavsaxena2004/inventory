@@ -26,24 +26,18 @@ urlpatterns = [
 ]
 
 # -----------------------------
-# Serve /static/ and /assets/
+# Serve /static/
 # -----------------------------
 # STATIC_URL files (collected by collectstatic or in STATICFILES_DIRS)
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-# /assets/ files (Vite build output in backend/static/assets)
-urlpatterns += static(
-    '/assets/',
-    document_root=os.path.join(settings.BASE_DIR, 'static', 'assets')
-)
-
 # -----------------------------
 # Catch-all for React frontend
-# Exclude API, /static/, and /assets/ requests
+# Exclude API and /static/ requests
 # -----------------------------
 urlpatterns += [
     re_path(
-        r'^(?!api/|static/|assets/).*$',  # Negative lookahead to prevent hijacking
+        r'^(?!api/|static/).*$',  # Negative lookahead to prevent hijacking
         root_views.FrontendAppView.as_view(),
         name='frontend'
     ),

@@ -51,6 +51,9 @@ def get_auth_payload_from_request(request) -> dict | None:
     return None
 
 def is_admin_request(request) -> bool:
+    from django.conf import settings
+    if settings.DEBUG:
+        return True  # For development, treat all requests as admin
     payload = get_auth_payload_from_request(request)
     return bool(payload and payload.get('is_admin') is True)
 

@@ -149,6 +149,7 @@ class PaymentVoucherView(APIView):
                 amount=data.get('amount'),
                 description=data.get('description'),
                 date=data.get('date'),
+                supplier_id=data.get('supplier'),
             )
             serializer = PaymentVoucherSerializer(voucher)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -159,7 +160,7 @@ class PaymentVoucherView(APIView):
         voucher_id = request.data.get('id')
         try:
             voucher = PaymentVoucher.objects.get(pk=voucher_id)
-            for f in ['voucher_no','type','payment_method','amount','description','date']:
+            for f in ['voucher_no','type','payment_method','amount','description','date','supplier']:
                 if f in request.data:
                     setattr(voucher, f, request.data.get(f))
             voucher.save()
