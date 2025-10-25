@@ -78,8 +78,14 @@ export default function App(){
     <div className="app-shell">
       <Sidebar currentHash={currentHash} />
       <main className="main-content">
-        <nav style={{marginBottom:12}}>
-          <a href="#/">Dashboard</a> | <a href="#/add-customer">Add Customer</a> | <a href="#/add-order">Add Order</a> | <a href="#/view-orders">View Orders</a> | <a href="#/market-creditors">Market Creditors</a> | <a href="#/payment-voucher">Payment Voucher</a>
+        <nav style={{marginBottom:20, display: 'flex', flexWrap: 'wrap', gap: '12px', padding: '12px 0', borderBottom: '1px solid #e5e7eb'}}>
+          <a href="#/">📊 Dashboard</a> |
+          <a href="#/add-customer">👥 Add Customer</a> |
+          <a href="#/add-order">🧾 Add Order</a> |
+          <a href="#/view-orders">📋 View Orders</a> |
+          <a href="#/market-creditors">💰 Market Creditors</a> |
+          <a href="#/payment-voucher">💳 Payment Voucher</a> |
+          <a href="#/supplier-ledger">📈 Supplier Ledger</a>
         </nav>
   {window.location.hash === '#/login' ? <Login /> : window.location.hash === '#/add-customer' ? <AddCustomer setCustomers={setCustomers} /> : window.location.hash === '#/add-order' ? <AddOrder customers={customers} setCustomers={setCustomers} user={user} logout={logout} /> : window.location.hash === '#/products' ? <Products /> : window.location.hash === '#/suppliers' ? <Suppliers /> : window.location.hash === '#/expenses' ? <Expenses /> : window.location.hash === '#/view-orders' ? <ViewOrders /> : window.location.hash === '#/market-creditors' ? <MarketCreditors /> : window.location.hash === '#/payment-voucher' ? <PaymentVoucher /> : window.location.hash === '#/reporting-monthly' ? <ReportingMonthly /> : window.location.hash === '#/reporting-cash' ? <ReportingCash /> : window.location.hash === '#/opening-balance' ? <OpeningBalance /> : window.location.hash === '#/low-stock' ? <LowStock /> : window.location.hash === '#/users' ? <Users /> : window.location.hash === '#/customer-products' ? <CustomerProducts /> : window.location.hash === '#/view-customers' ? <ViewCustomers /> : window.location.hash === '#/supplier-ledger' ? <SupplierLedger /> : window.location.hash === '#/view-quotation' ? <ViewQuotation /> : window.location.hash === '#/add-quotation' ? <AddQuotation /> : (
         <>

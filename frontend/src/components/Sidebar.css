@@ -26,10 +26,15 @@
   .sidebar.closed{transform:translateX(-100%)}
   .mobile-toggle{display:block}
   .brand-text{display:none}
+  .nav-item{gap:8px;padding:12px 8px}
+  .nav-icon{font-size:16px}
+  .nav-title{font-size:14px}
 }
 
 @media(max-width:480px){
   .sidebar{width:200px}
   .nav-item{padding:8px}
   .subitem{padding:6px}
+  .brand{padding:12px}
+  .logo{width:36px;height:36px;font-size:14px}
 }
