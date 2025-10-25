@@ -32,7 +32,7 @@ RUN npm install
 COPY frontend ./
 
 # Run Vite build safely (builds directly to backend/static)
-RUN npx vite build
+RUN chmod +x ./node_modules/.bin/vite && npx vite build
 
 # ---------------------
 # Copy backend code and collect static files
