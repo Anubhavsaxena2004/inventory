@@ -40,7 +40,7 @@ def health_check(request):
 
 class FrontendAppView(View):
     def get(self, request):
-        index_path = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
+        index_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'index.html')
         if os.path.exists(index_path):
             with open(index_path, 'r', encoding='utf-8') as f:
                 content = f.read()
