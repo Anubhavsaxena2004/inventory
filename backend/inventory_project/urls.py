@@ -34,6 +34,6 @@ urlpatterns = [
     path('api/auth/login/', root_views.login_view),
     path('api/auth/me/', root_views.me_view),
     path('healthz/', root_views.health_check),
-    # Catch-all pattern to serve the React app
-    re_path(r'^(?!api/).*$', root_views.FrontendAppView.as_view(), name='frontend'),
+    # Catch-all pattern to serve the React app (exclude api and static)
+    re_path(r'^(?!api/|static/).*$', root_views.FrontendAppView.as_view(), name='frontend'),
 ]
