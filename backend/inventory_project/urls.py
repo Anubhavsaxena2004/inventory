@@ -1,23 +1,12 @@
 """
 URL configuration for inventory_project project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
+import os
 from django.contrib import admin
 from django.urls import path, include, re_path
-from django.views.static import serve
 from django.conf import settings
+from django.conf.urls.static import static
 from . import views as root_views
 
 urlpatterns = [
@@ -34,6 +23,28 @@ urlpatterns = [
     path('api/auth/login/', root_views.login_view),
     path('api/auth/me/', root_views.me_view),
     path('healthz/', root_views.health_check),
-    # Catch-all pattern to serve the React app (exclude api and static)
-    re_path(r'^(?!api/|static/).*$', root_views.FrontendAppView.as_view(), name='frontend'),
+]
+
+# -----------------------------
+# Serve /static/ and /assets/
+# -----------------------------
+# STATIC_URL files (collected by collectstatic or in STATICFILES_DIRS)
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# /assets/ files (Vite build output in backend/static/assets)
+urlpatterns += static(
+    '/assets/',
+    document_root=os.path.join(settings.BASE_DIR, 'static', 'assets')
+)
+
+# -----------------------------
+# Catch-all for React frontend
+# Exclude API, /static/, and /assets/ requests
+# -----------------------------
+urlpatterns += [
+    re_path(
+        r'^(?!api/|static/|assets/).*$',  # Negative lookahead to prevent hijacking
+        root_views.FrontendAppView.as_view(),
+        name='frontend'
+    ),
 ]

@@ -24,9 +24,10 @@ import os
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-*#()$$lczoxoy9_lbzsnk7)ckx*c&10_yhb#*4y#)@qrvhpi%z')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'inventory-n4d1.onrender.com']
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'inventory-n4d1.onrender.com').split(',') if os.environ.get('ALLOWED_HOSTS') else ['inventory-n4d1.onrender.com']
+# ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'inventory-n4d1.onrender.com').split(',') if os.environ.get('ALLOWED_HOSTS') else ['inventory-n4d1.onrender.com']
 
 
 # Application definition
@@ -130,7 +131,11 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
+# Include your backend static folder where Vite puts built assets
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 

@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 
 // Development proxy to forward /api requests to the Django backend
 export default defineConfig({
-  base: '/static/',
+  base: '/staticc/',
   build: {
     outDir: '../backend/static',
     assetsDir: 'assets',
