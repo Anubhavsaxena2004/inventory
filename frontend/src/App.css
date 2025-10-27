@@ -63,10 +63,10 @@
   --border-focus: #6366f1;
 
   /* Text Colors */
-  --text-primary: #111827;
-  --text-secondary: #374151;
-  --text-tertiary: #6b7280;
-  --text-muted: #9ca3af;
+  --text-primary: #000000;
+  --text-secondary: #333333;
+  --text-tertiary: #666666;
+  --text-muted: #999999;
   --text-inverse: #ffffff;
 
   /* Shadows */
