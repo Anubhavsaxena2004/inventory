@@ -25,6 +25,9 @@ import SupplierLedger from './components/SupplierLedger'
 import ViewQuotation from './components/ViewQuotation'
 import AddQuotation from './components/AddQuotation'
 
+// Ensure unified stylesheet is imported after component-level CSS so its rules take precedence
+import './styles/unified.css'
+
 function StatCard({ number, label, color }) {
   return (
     <div className="card stat-card">

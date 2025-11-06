@@ -6,6 +6,10 @@ export default defineConfig({
   build: {
     outDir: '../backend/static',
     assetsDir: 'assets',
+    // Disable CSS code splitting so all CSS is emitted into a single file.
+    // This ensures the global `unified.css` import order controls final cascade
+    // and avoids component-level CSS unexpectedly overriding global tokens.
+    cssCodeSplit: false,
   },
   server: {
     proxy: {
