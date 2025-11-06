@@ -161,10 +161,148 @@ body {
   margin: 0;
   padding: 0;
   background-color: var(--bg-secondary);
+  color: var(--text-primary); /* default text color for the app */
+  -webkit-text-fill-color: var(--text-primary); /* webkit fallback */
+  /* Make body copy more legible by default */
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ===============================
+   Text visibility / contrast fix
+   =============================== */
+
+/* 1) Remove broad color override (DO NOT use global * color) */
+/* -> If you currently have `* { color: var(--text-primary); }`, remove it. */
+
+/* 2) Ensure sensible defaults on body */
+body {
+  color: var(--text-primary); /* default text color for the app */
+  -webkit-text-fill-color: var(--text-primary); /* webkit fallback */
+  font-weight: var(--font-weight-semibold);
+}
+
+/* 3) Headings and key text */
+h1,h2,h3,h4,h5,h6 {
   color: var(--text-primary);
-  font-size: var(--font-size-base);
+  -webkit-text-fill-color: var(--text-primary);
+  /* Strong headings improve visibility on light backgrounds */
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
+}
+
+/* 4) Buttons: let the variant classes decide color; default to inherit */
+.btn {
+  color: inherit; /* prevents low-contrast default color being applied globally */
+}
+
+/* Ensure variant buttons have guaranteed contrast */
+.btn.primary,
+.btn.danger,
+.btn.success {
+  color: var(--text-inverse) !important; /* white text on colored buttons */
+  -webkit-text-fill-color: var(--text-inverse);
+}
+
+/* Secondary stays readable */
+.btn.secondary {
+  color: var(--text-secondary);
+}
+
+/* 5) Make sure labels and form text are readable */
+.form-row label,
+input, select, textarea {
+  color: var(--text-secondary);
+  -webkit-text-fill-color: var(--text-secondary);
+  /* Slightly bolder form text for legibility */
+  font-weight: var(--font-weight-medium);
+}
+
+/* Inputs: placeholder lower contrast but still readable */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 1; /* ensure placeholder isn't too faint in some browsers */
+}
+
+/* 6) Table headings and table cells */
+table th {
+  color: var(--text-inverse); /* assume dark header bars in your design */
+  background: var(--gray-900); /* keep header background, adjust to your theme */
+  -webkit-text-fill-color: var(--text-inverse);
   font-weight: var(--font-weight-bold);
 }
+
+table td {
+  color: var(--text-primary);
+}
+
+/* 7) Stat label & badges — text on top of colored backgrounds must be white */
+.stat-badge,
+.stat-card .stat-label,
+.card h3 .badge,
+.autocomplete-item .badge {
+  color: var(--text-inverse);
+  -webkit-text-fill-color: var(--text-inverse);
+}
+
+/* If you have blue labels (like the screenshot), make sure they use white text */
+.label-primary,
+.kpi-label,
+.badge-blue,
+.pill--primary {
+  background: var(--primary-600);
+  color: var(--text-inverse);
+  border-color: var(--primary-600);
+  -webkit-text-fill-color: var(--text-inverse);
+}
+
+/* 8) Autocomplete / active items must contrast */
+.autocomplete-item.active {
+  background: var(--primary-50);
+  color: var(--primary-700);
+  -webkit-text-fill-color: var(--primary-700);
+}
+
+/* If you intentionally want the active item to be colored bar with white text, use */
+.autocomplete-item.active.inverse {
+  background: var(--primary-600);
+  color: var(--text-inverse);
+  -webkit-text-fill-color: var(--text-inverse);
+}
+
+/* 9) Utility helper for components on colored backgrounds */
+.contrast-on {
+  color: var(--text-inverse) !important;
+  -webkit-text-fill-color: var(--text-inverse) !important;
+}
+
+/* Example: use <span class="contrast-on"> text </span> inside blue boxes */
+
+/* 10) Dark-mode adjustments — explicit contrasts */
+@media (prefers-color-scheme: dark) {
+  table th {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+  }
+
+  /* Explicitly ensure buttons keep contrast in dark mode */
+  .btn.primary,
+  .btn.danger,
+  .btn.success {
+    color: var(--text-inverse) !important;
+  }
+}
+
+/* 11) Extra: force text-rendering clarity on some platforms */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 12) Troubleshoot tip (temporary debugging aid)
+   If you still see invisible text, add this rule in dev tools to highlight which elements are using unexpected color:
+   * { outline: 1px solid rgba(255,0,0,0.05); }
+*/
 
 /* Layout Components */
 .app-shell {
@@ -581,6 +719,7 @@ nav a.active {
 .autocomplete-item.active {
   background: var(--primary-50);
   color: var(--primary-700);
+  -webkit-text-fill-color: var(--primary-700);
 }
 
 /* Modal System */
