@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import AddCustomer from './components/AddCustomer'
 import AddOrder from './components/AddOrder'
 import Login from './components/Login'
+import AdminLogin from './components/AdminLogin'
 import { useContext } from 'react'
 import { AuthContext } from './auth/AuthProvider'
 import Products from './components/Products'
@@ -42,7 +43,29 @@ export default function App(){
   const { user, logout } = useContext(AuthContext)
   const [creditors, setCreditors] = useState([])
   const [latestExpenses, setLatestExpenses] = useState([])
-  const [currentHash, setCurrentHash] = useState(window.location.hash || '#/')
+  const [currentHash, setCurrentHash] = useState(window.location.hash || '#/admin-login')
+
+  // Ensure the app starts on admin login when no hash is present
+  React.useEffect(() => {
+    if (!window.location.hash) {
+      window.location.hash = '#/admin-login'
+    }
+  }, [])
+
+  // Enforce auth: redirect to admin-login if not logged in
+  React.useEffect(() => {
+    // If user is not logged in and trying to access any page other than admin-login, force redirect
+    if (!user) {
+      if (window.location.hash && window.location.hash !== '#/admin-login') {
+        window.location.hash = '#/admin-login'
+      }
+    } else {
+      // If logged in and still on admin-login, go to dashboard
+      if (window.location.hash === '#/admin-login' || window.location.hash === '#/login') {
+        window.location.hash = '#/'
+      }
+    }
+  }, [user, currentHash])
 
   useEffect(()=>{
     fetch('/api/orders/view/')
@@ -79,6 +102,7 @@ export default function App(){
       <Sidebar currentHash={currentHash} />
       <main className="main-content">
         <nav style={{marginBottom:20, display: 'flex', flexWrap: 'wrap', gap: '12px', padding: '12px 0', borderBottom: '1px solid #e5e7eb'}}>
+          <a href="#/admin-login">🔐 Admin Login</a> |
           <a href="#/">📊 Dashboard</a> |
           <a href="#/add-customer">👥 Add Customer</a> |
           <a href="#/add-order">🧾 Add Order</a> |
@@ -87,7 +111,7 @@ export default function App(){
           <a href="#/payment-voucher">💳 Payment Voucher</a> |
           <a href="#/supplier-ledger">📈 Supplier Ledger</a>
         </nav>
-  {window.location.hash === '#/login' ? <Login /> : window.location.hash === '#/add-customer' ? <AddCustomer setCustomers={setCustomers} /> : window.location.hash === '#/add-order' ? <AddOrder customers={customers} setCustomers={setCustomers} user={user} logout={logout} /> : window.location.hash === '#/products' ? <Products /> : window.location.hash === '#/suppliers' ? <Suppliers /> : window.location.hash === '#/expenses' ? <Expenses /> : window.location.hash === '#/view-orders' ? <ViewOrders /> : window.location.hash === '#/market-creditors' ? <MarketCreditors /> : window.location.hash === '#/payment-voucher' ? <PaymentVoucher /> : window.location.hash === '#/reporting-monthly' ? <ReportingMonthly /> : window.location.hash === '#/reporting-cash' ? <ReportingCash /> : window.location.hash === '#/opening-balance' ? <OpeningBalance /> : window.location.hash === '#/low-stock' ? <LowStock /> : window.location.hash === '#/users' ? <Users /> : window.location.hash === '#/customer-products' ? <CustomerProducts /> : window.location.hash === '#/view-customers' ? <ViewCustomers /> : window.location.hash === '#/supplier-ledger' ? <SupplierLedger /> : window.location.hash === '#/view-quotation' ? <ViewQuotation /> : window.location.hash === '#/add-quotation' ? <AddQuotation /> : (
+  {window.location.hash === '#/admin-login' ? <AdminLogin /> : window.location.hash === '#/login' ? <Login /> : window.location.hash === '#/add-customer' ? <AddCustomer setCustomers={setCustomers} /> : window.location.hash === '#/add-order' ? <AddOrder customers={customers} setCustomers={setCustomers} user={user} logout={logout} /> : window.location.hash === '#/products' ? <Products /> : window.location.hash === '#/suppliers' ? <Suppliers /> : window.location.hash === '#/expenses' ? <Expenses /> : window.location.hash === '#/view-orders' ? <ViewOrders /> : window.location.hash === '#/market-creditors' ? <MarketCreditors /> : window.location.hash === '#/payment-voucher' ? <PaymentVoucher /> : window.location.hash === '#/reporting-monthly' ? <ReportingMonthly /> : window.location.hash === '#/reporting-cash' ? <ReportingCash /> : window.location.hash === '#/opening-balance' ? <OpeningBalance /> : window.location.hash === '#/low-stock' ? <LowStock /> : window.location.hash === '#/users' ? <Users /> : window.location.hash === '#/customer-products' ? <CustomerProducts /> : window.location.hash === '#/view-customers' ? <ViewCustomers /> : window.location.hash === '#/supplier-ledger' ? <SupplierLedger /> : window.location.hash === '#/view-quotation' ? <ViewQuotation /> : window.location.hash === '#/add-quotation' ? <AddQuotation /> : (
         <>
         <header className="dashboard-header">
           <h2>Dashboard</h2>

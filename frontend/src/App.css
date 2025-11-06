@@ -415,6 +415,7 @@ table td {
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-light);
+  padding: var(--space-4);
 }
 
 table {
@@ -425,8 +426,8 @@ table {
 
 table th {
   background: var(--gray-50);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-secondary);
+  font-weight: 700; /* stronger header weight for visibility */
+  color: var(--text-primary);
   text-align: left;
   padding: var(--space-4) var(--space-5);
   border-bottom: 2px solid var(--border-medium);
@@ -439,10 +440,12 @@ table th {
 }
 
 table td {
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-3) var(--space-5);
   border-bottom: 1px solid var(--border-light);
   transition: background-color var(--transition-fast);
   font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
 table tbody tr:hover {
