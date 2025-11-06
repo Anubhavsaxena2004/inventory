@@ -21,6 +21,7 @@ urlpatterns = [
     path('api/settings/', include('settings_app.urls')),
     path('api/reporting/', include('reporting.urls')),
     path('api/auth/login/', root_views.login_view),
+    path('api/auth/logout/', root_views.logout_view),
     path('api/auth/me/', root_views.me_view),
     path('healthz/', root_views.health_check),
 ]

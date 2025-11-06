@@ -10,18 +10,23 @@ const AdminLogin = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Hardcoded admin credential as requested
-    if (adminId === '123456789' && password === 'password') {
-      // Log in via AuthProvider so other components know the user
-      try{
-        // simple static token and user object for admin
-        login('admin-token', { name: 'Admin', is_admin: true })
-      }catch(e){/* ignore */}
-      // navigate to dashboard
-      window.location.hash = '#/';
-    } else {
-      setError('Invalid admin ID or password');
-    }
+    // Send credentials to backend login endpoint
+    fetch('/api/auth/login/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: adminId, password })
+    }).then(async res => {
+      if(res.ok){
+        const data = await res.json()
+        login(data.token, data.user)
+        window.location.hash = '#/'
+      } else if(res.status === 409){
+        setError('This admin is already logged in from another session')
+      } else {
+        const j = await res.json().catch(()=>({}));
+        setError(j.error || 'Invalid admin ID or password')
+      }
+    }).catch(()=> setError('Network error'))
   };
 
   return (

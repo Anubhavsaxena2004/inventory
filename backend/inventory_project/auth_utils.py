@@ -4,6 +4,7 @@ import hashlib
 import json
 import time
 from django.conf import settings
+from django.core.cache import cache
 
 HEADER = {"alg": "HS256", "typ": "JWT"}
 
@@ -47,7 +48,20 @@ def get_auth_payload_from_request(request) -> dict | None:
     auth = request.headers.get('Authorization') or ''
     if auth.startswith('Bearer '):
         token = auth[len('Bearer '):]
-        return verify_jwt(token)
+        payload = verify_jwt(token)
+        # Enforce single active session: token must match cached active token for this user
+        try:
+            if payload and 'sub' in payload:
+                key = f"active_admin_{payload['sub']}"
+                active = cache.get(key)
+                if active and active == token:
+                    return payload
+                # If no active token set, still allow (login might not have cached)
+                if active is None:
+                    return payload
+        except Exception:
+            pass
+        return None
     return None
 
 def is_admin_request(request) -> bool:
