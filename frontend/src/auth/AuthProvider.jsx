@@ -20,13 +20,37 @@ export function AuthProvider({children}){
     else localStorage.removeItem('user')
   },[user])
 
+  // ---- auth helpers: login / logout ----
+  const logout = useCallback(()=>{
+    // attempt server logout
+    try{
+      const t = localStorage.getItem('token')
+      if(t){
+        fetch('/api/auth/logout/', { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(()=>{})
+      }
+    }catch(e){}
+    setToken(null);
+    setUser(null);
+    try{ localStorage.removeItem('lastActivity') }catch(e){}
+    // notify other tabs to logout
+    try{ localStorage.setItem('logout', Date.now().toString()) }catch(e){}
+  },[])
+
+  const login = useCallback((newToken, newUser)=>{
+    setToken(newToken);
+    setUser(newUser);
+    try{ localStorage.setItem('lastActivity', Date.now().toString()) }catch(e){}
+  },[])
+
   // Validate token with server on mount/loading to ensure it's still the active session
   useEffect(()=>{
+    let mounted = true
     async function validate(){
       const t = localStorage.getItem('token')
       if(!t) return
       try{
         const res = await fetch('/api/auth/me/', { headers: { 'Authorization': 'Bearer ' + t } })
+        if(!mounted) return
         if(res.status === 200){
           const d = await res.json()
           // ensure user object matches server
@@ -42,27 +66,11 @@ export function AuthProvider({children}){
       }
     }
     validate()
+    return ()=>{ mounted = false }
     // run only once on mount
-  }, [])
+  }, [logout])
 
-  const logout = useCallback(()=>{
-    // attempt server logout
-    try{
-      const t = localStorage.getItem('token')
-      if(t){
-        fetch('/api/auth/logout/', { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(()=>{})
-      }
-    }catch(e){}
-    setToken(null);
-    setUser(null);
-    try{ localStorage.removeItem('lastActivity') }catch(e){}
-  },[])
-
-  const login = useCallback((newToken, newUser)=>{
-    setToken(newToken);
-    setUser(newUser);
-    try{ localStorage.setItem('lastActivity', Date.now().toString()) }catch(e){}
-  },[])
+  
 
   // Activity tracking: update lastActivity on user interactions
   useEffect(()=>{
@@ -76,7 +84,25 @@ export function AuthProvider({children}){
     const events = ['click','mousemove','keydown','touchstart','scroll']
     events.forEach(evt => window.addEventListener(evt, updateActivity, {passive:true}))
     window.addEventListener('focus', updateActivity)
-    window.addEventListener('visibilitychange', ()=>{ if(!document.hidden) updateActivity() })
+    const visibilityHandler = () => { if(!document.hidden) updateActivity() }
+    window.addEventListener('visibilitychange', visibilityHandler)
+
+    // Storage listener to sync logout across tabs
+    function storageHandler(e){
+      try{
+        if(e.key === 'logout'){
+          // remote logout triggered in another tab
+          setToken(null)
+          setUser(null)
+        }
+        if(e.key === 'token' && !e.newValue){
+          // token removed in another tab
+          setToken(null)
+          setUser(null)
+        }
+      }catch(err){}
+    }
+    window.addEventListener('storage', storageHandler)
 
     // Poll to check expiration. We run this only when a user is present.
     let intervalId = null
@@ -99,7 +125,8 @@ export function AuthProvider({children}){
     return ()=>{
       events.forEach(evt => window.removeEventListener(evt, updateActivity))
       window.removeEventListener('focus', updateActivity)
-      window.removeEventListener('visibilitychange', ()=>{ if(!document.hidden) updateActivity() })
+      window.removeEventListener('visibilitychange', visibilityHandler)
+      window.removeEventListener('storage', storageHandler)
       if(intervalId) clearInterval(intervalId)
     }
   }, [user, logout])
