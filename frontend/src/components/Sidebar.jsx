@@ -11,11 +11,11 @@ const sections = [
   { title: 'Employee', icon: '🧑‍💼' },
   { title: 'Expense', icon: '💸' },
   { title: 'Quotation', icon: '✉️', children: ['View Quotation', 'Add Quotation'] },
-  { title: 'Settings', icon: '⚙️', children: ['Opening Balance', 'Products', 'Low Stock', 'Users', 'Customer Products'] },
+  { title: 'Settings', icon: '⚙️', children: ['Opening Balance', 'Products', 'Low Stock', 'Users', 'Customer Products', 'Logout'] },
 ]
 
 export default function Sidebar({ currentHash }){
-  const { user } = useContext(AuthContext)
+  const { user, logout } = useContext(AuthContext)
   const isAdmin = user?.is_admin
   const [open,setOpen] = useState(true)
   // derive active from currentHash when provided
@@ -39,7 +39,8 @@ export default function Sidebar({ currentHash }){
     '#/products': 'Products',
     '#/low-stock': 'Low Stock',
     '#/users': 'Users',
-    '#/customer-products': 'Customer Products'
+    '#/customer-products': 'Customer Products',
+    '#/logout': 'Logout'
   }
   const [active,setActive] = useState(hashToTitle[currentHash || '#/'] || 'Dashboard')
   const [expanded,setExpanded] = useState({})
@@ -56,7 +57,7 @@ export default function Sidebar({ currentHash }){
         'Add Customer':'Customers','View Customers':'Customers',
         'View Suppliers':'Suppliers','Supplier Ledger':'Suppliers',
         'View Quotation':'Quotation','Add Quotation':'Quotation',
-        'Opening Balance':'Settings','Products':'Settings','Low Stock':'Settings','Users':'Settings','Customer Products':'Settings'
+        'Opening Balance':'Settings','Products':'Settings','Low Stock':'Settings','Users':'Settings','Customer Products':'Settings','Logout':'Settings'
       }
       const p = parentMap[t]
       if(p) setExpanded(prev=>({ ...prev, [p]: true }))
@@ -89,7 +90,8 @@ export default function Sidebar({ currentHash }){
         'Products': '#/products',
         'Low Stock': '#/low-stock',
         'Users': '#/users',
-        'Customer Products': '#/customer-products'
+        'Customer Products': '#/customer-products',
+        'Logout': '#/logout'
       }
       window.location.hash = hashMap[title] || '#/'
     }
@@ -130,6 +132,18 @@ export default function Sidebar({ currentHash }){
 
       <div className="sidebar-footer">
         <div className="sidebar-user">{user ? user.name : 'Guest'}</div>
+        {user && (
+          <button 
+            className="btn small" 
+            style={{marginTop: '8px', width: '100%', background: '#dc2626', color: '#fff', border: 'none'}}
+            onClick={() => {
+              logout('manual')
+              window.location.href = '/admin-login/'
+            }}
+          >
+            Logout
+          </button>
+        )}
       </div>
 
     </aside>

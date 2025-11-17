@@ -311,6 +311,18 @@ table td {
   background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
 }
 
+.app-shell.auth-shell {
+  background: transparent;
+}
+
+.main-content.auth-main {
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  min-height: 100vh;
+}
+
 .main-content {
   flex: 1;
   padding: var(--space-8);
@@ -411,7 +423,8 @@ table td {
 
 /* Enhanced Table Styling */
 .table-card {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-light);

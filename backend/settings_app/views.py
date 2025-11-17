@@ -104,3 +104,8 @@ class CustomerProductsView(APIView):
         products = Product.objects.all()
         serializer = ProductSerializer(products, many=True)
         return Response({'customer_products': serializer.data}, status=status.HTTP_200_OK)
+
+class LogoutView(APIView):
+    def post(self, request):
+        from inventory_project.views import logout_view
+        return logout_view(request)

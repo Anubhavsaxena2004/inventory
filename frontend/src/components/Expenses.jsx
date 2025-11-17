@@ -88,7 +88,7 @@ export default function Expenses(){
             try{
               const method = editingId? 'PUT':'POST'
               const body = editingId? { id: editingId, ...form, amount: Number(form.amount), supplier: form.supplier || null} : { ...form, amount: Number(form.amount), supplier: form.supplier || null}
-              const r = await fetch('/api/expense/new/',{ method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
+              const r = await fetchWithAuth('/api/expense/new/',{ method, headers:{'Content-Type':'application/json','X-Admin':'true'}, body: JSON.stringify(body) })
               const d = await r.json()
               if(r.ok){ setMsg(''); setForm({type:'Misc', amount:'', description:'', date:'', supplier:''}); setErrors({}); setEditingId(null); refresh() }
               else { if(d && typeof d==='object') setErrors(d); else setMsg(String(d)) }

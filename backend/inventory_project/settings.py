@@ -130,11 +130,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-# Make backend/static the STATIC_ROOT so built frontend files are served at /static/<file>
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-
-# We no longer use additional STATICFILES_DIRS for dev; built files are copied directly to STATIC_ROOT
-STATICFILES_DIRS = []
+# Built frontend assets live in backend/static (populated by postbuild)
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+# Collected files (for whitenoise) go to backend/staticfiles
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 

@@ -8,10 +8,25 @@ from settings_app.models import User
 from .auth_utils import generate_jwt, get_auth_payload_from_request
 from django.core.cache import cache
 
+# Hardcoded default admin credentials
+DEFAULT_ADMIN_EMAIL = 'inventory@gmail.com'
+DEFAULT_ADMIN_PASSWORD = '1234'
+
+def ensure_default_admin():
+    """Ensure the default admin user exists in the database."""
+    if not User.objects.filter(email=DEFAULT_ADMIN_EMAIL).exists():
+        User.objects.create(
+            name='Admin User',
+            email=DEFAULT_ADMIN_EMAIL,
+            password=DEFAULT_ADMIN_PASSWORD
+        )
+
 
 # Admin-facing pages: simple server-side login/logout that integrate with
 # the existing API-style login logic. The form posts to `admin-login/submit/`.
 def admin_login_page(request):
+    # Ensure default admin exists
+    ensure_default_admin()
     # If already logged in (session), redirect to frontend root
     if request.session.get('admin_user_id'):
         return redirect('/')
@@ -24,6 +39,8 @@ def admin_login_action(request):
         return JsonResponse({'error': 'POST required'}, status=405)
     email = request.POST.get('email')
     password = request.POST.get('password')
+    # Ensure default admin exists
+    ensure_default_admin()
     try:
         user = User.objects.get(email=email)
     except User.DoesNotExist:
@@ -41,6 +58,7 @@ def admin_login_action(request):
     request.session['admin_user_id'] = user.pk
     request.session['admin_user_email'] = user.email
     request.session['admin_token'] = token
+    request.session['admin_user_name'] = user.name
     # Redirect to frontend root (which will be served by the React app or other admin UI)
     return redirect('/')
 
@@ -53,6 +71,7 @@ def admin_logout_page(request):
     request.session.pop('admin_user_id', None)
     request.session.pop('admin_user_email', None)
     request.session.pop('admin_token', None)
+    request.session.pop('admin_user_name', None)
     return redirect('/admin-login/')
 
 @csrf_exempt
@@ -65,6 +84,8 @@ def login_view(request):
         data = {}
     email = data.get('email')
     password = data.get('password')
+    # Ensure default admin exists
+    ensure_default_admin()
     try:
         user = User.objects.get(email=email)
     except User.DoesNotExist:
@@ -83,6 +104,10 @@ def login_view(request):
     # Store active token in cache. TTL optional; using JWT exp (24h) by default.
     # Use a cache timeout equal to the token's lifetime (default used in generate_jwt) => 24h
     cache.set(key, token, timeout=24*3600)
+    request.session['admin_user_id'] = user.pk
+    request.session['admin_user_email'] = user.email
+    request.session['admin_user_name'] = user.name
+    request.session['admin_token'] = token
     return JsonResponse({'token': token, 'user': {'id': user.pk, 'email': user.email, 'name': user.name, 'is_admin': True}})
 
 
@@ -94,6 +119,10 @@ def logout_view(request):
         return JsonResponse({'error': 'Unauthorized'}, status=401)
     key = f"active_admin_{payload.get('sub')}"
     cache.delete(key)
+    request.session.pop('admin_user_id', None)
+    request.session.pop('admin_user_email', None)
+    request.session.pop('admin_user_name', None)
+    request.session.pop('admin_token', None)
     return JsonResponse({'ok': True})
 
 
@@ -108,6 +137,8 @@ def health_check(request):
 
 class FrontendAppView(View):
     def get(self, request):
+        if not request.session.get('admin_user_id'):
+            return redirect('/admin-login/')
         # Try multiple locations for index.html so the app works whether built into
         # `backend/static` or `backend/staticfiles`.
         base = os.path.dirname(__file__)
@@ -121,6 +152,32 @@ class FrontendAppView(View):
             if os.path.exists(p):
                 with open(p, 'r', encoding='utf-8') as f:
                     content = f.read()
+                token = request.session.get('admin_token')
+                if token:
+                    bootstrap = {
+                        'token': token,
+                        'user': {
+                            'id': request.session.get('admin_user_id'),
+                            'email': request.session.get('admin_user_email'),
+                            'name': request.session.get('admin_user_name'),
+                            'is_admin': True,
+                        }
+                    }
+                    boot_script = """
+    <script id="server-auth-bootstrap">
+    (function(){
+      try {
+        const data = %s;
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('lastActivity', Date.now().toString());
+      } catch (err) {
+        console.warn('Failed to persist server auth state', err);
+      }
+    })();
+    </script>
+                    """ % json.dumps(bootstrap)
+                    content = content.replace('</body>', f'{boot_script}\n</body>')
                 return HttpResponse(content, content_type='text/html')
         return HttpResponse("index.html not found; looked in: " + ",".join(candidates), status=404)
 

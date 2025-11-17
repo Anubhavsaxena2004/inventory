@@ -5,8 +5,10 @@ const path = require('path');
 const unifiedSrc = path.resolve(__dirname, '..', 'src', 'styles', 'unified.css');
 const backendStatic = path.resolve(__dirname, '..', '..', 'backend', 'static');
 const backendAssets = path.join(backendStatic, 'assets');
+const backendStaticfiles = path.resolve(__dirname, '..', '..', 'backend', 'staticfiles');
 const csDest = path.join(backendAssets, 'cs.css');
 const viteDist = path.resolve(__dirname, '..', 'dist'); // Vite default output
+const adminLandingCss = path.resolve(__dirname, '..', 'src', 'components', 'Login.css');
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -47,6 +49,21 @@ function clearDirSync(dir) {
   }
 }
 
+function removeMatchingFiles(dir, matcher) {
+  if (!fs.existsSync(dir)) return;
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  entries.forEach(entry => {
+    if (entry.isFile() && matcher(entry.name)) {
+      try {
+        fs.unlinkSync(path.join(dir, entry.name));
+        console.log('Removed stale file', entry.name);
+      } catch (err) {
+        console.warn('Failed removing stale file', entry.name, err.message);
+      }
+    }
+  });
+}
+
 function copyBuildToBackend() {
   if (!fs.existsSync(viteDist)) {
     console.warn('Vite build directory not found at', viteDist, '- skipping build copy');
@@ -85,6 +102,24 @@ function copyBuildToBackend() {
   }
 }
 
+function appendFileContents(srcPath, destPath, headerComment) {
+  if (!fs.existsSync(srcPath)) {
+    console.warn('CSS source not found at', srcPath, '- skipping append');
+    return;
+  }
+  try {
+    const snippet = fs.readFileSync(srcPath, 'utf8');
+    let block = snippet;
+    if (headerComment) {
+      block = `\n/* ${headerComment} */\n${snippet}\n`;
+    }
+    fs.appendFileSync(destPath, block, 'utf8');
+    console.log(`Appended styles from ${srcPath} -> ${destPath}`);
+  } catch (err) {
+    console.warn('Failed appending styles from', srcPath, 'to', destPath, err.message);
+  }
+}
+
 function copyUnified() {
   if (!fs.existsSync(unifiedSrc)) {
     console.warn('Source unified.css not found at', unifiedSrc, '- skipping unified copy');
@@ -94,21 +129,58 @@ function copyUnified() {
   copyFileSync(unifiedSrc, csDest);
   console.log('Copied', unifiedSrc, '->', csDest);
 
-  // Append small admin-login styles so the server-side admin_login.html uses shared styles
-  try {
-    const adminCss = `
-/* Admin login page overrides (appended by postbuild) */
+  // Append SPA admin landing/login styles so Django template can share the same look
+  appendFileContents(adminLandingCss, csDest, 'Admin landing & auth styles');
+
+  // legacy overrides kept for compatibility with server-rendered template classes
+  const adminCss = `
+/* Legacy admin-login helpers */
 .card{width:900px;max-width:96%;margin:24px auto;border-radius:10px}
 .admin-left{background:linear-gradient(135deg,#f7f8fb,#fff);padding:40px}
 .admin-right{padding:40px}
 .admin-input{width:100%;padding:12px 14px;margin:10px 0;border:1px solid #e6e9ef;border-radius:28px}
 .admin-btn{display:inline-block;background:var(--brand);color:#fff;padding:12px 30px;border-radius:28px;border:0;cursor:pointer}
 `;
-    fs.appendFileSync(csDest, adminCss, 'utf8');
-    console.log('Appended admin CSS to', csDest);
-  } catch (err) {
-    console.warn('Could not append admin css to', csDest, err.message);
+  fs.appendFileSync(csDest, adminCss, 'utf8');
+  console.log('Appended legacy admin CSS helpers to', csDest);
+}
+
+function mergeBundledCssIntoCs() {
+  if (!fs.existsSync(csDest)) {
+    console.warn('cs.css not found while attempting to merge bundle CSS');
+    return;
   }
+  const pools = [
+    { dir: backendStatic, relative: file => file },
+    { dir: backendAssets, relative: file => path.join('assets', file) },
+  ];
+  pools.forEach(pool => {
+    if (!fs.existsSync(pool.dir)) return;
+    const entries = fs.readdirSync(pool.dir, { withFileTypes: true });
+    entries
+      .filter(entry => entry.isFile() && entry.name.endsWith('.css') && entry.name !== 'cs.css')
+      .forEach(entry => {
+        const filePath = path.join(pool.dir, entry.name);
+        try {
+          const css = fs.readFileSync(filePath, 'utf8');
+          fs.appendFileSync(csDest, `\n/* Bundled from ${pool.relative(entry.name)} */\n${css}\n`, 'utf8');
+          fs.unlinkSync(filePath);
+          console.log('Merged bundled CSS', pool.relative(entry.name), 'into cs.css');
+        } catch (err) {
+          console.warn('Failed merging CSS file', pool.relative(entry.name), err.message);
+        }
+      });
+  });
+}
+
+function syncStaticToStaticfiles() {
+  if (!fs.existsSync(backendStatic)) {
+    console.warn('backend/static not found, cannot sync to staticfiles');
+    return;
+  }
+  clearDirSync(backendStaticfiles);
+  copyDirSync(backendStatic, backendStaticfiles);
+  console.log('Synced backend/static -> backend/staticfiles');
 }
 
 function patchIndexFile(indexPath) {
@@ -118,21 +190,33 @@ function patchIndexFile(indexPath) {
       return;
     }
     let html = fs.readFileSync(indexPath, 'utf8');
-    const linkRegex = /<link\s+rel=["']stylesheet["'][^>]*href=["']([^"']*assets\/[^"']*\.css)["'][^>]*>\s*/i;
+    // Remove any existing stylesheet links (we only serve cs.css)
+    html = html.replace(/<link[^>]+rel=["']stylesheet["'][^>]*>\s*/gi, '');
     const csLink = '  <link rel="stylesheet" crossorigin href="/static/assets/cs.css">\n';
-    if (linkRegex.test(html)) {
-      html = html.replace(linkRegex, csLink);
-      fs.writeFileSync(indexPath, html, 'utf8');
-      console.log('Patched', indexPath, 'to reference cs.css');
-      return;
-    }
     const headClose = /<\/head>/i;
     if (headClose.test(html)) {
       html = html.replace(headClose, csLink + '</head>');
-      fs.writeFileSync(indexPath, html, 'utf8');
-      console.log('Inserted cs.css link into', indexPath);
-      return;
+    } else {
+      html = csLink + html;
     }
+
+    // Ensure script tag points to the actual hashed bundle under /static/assets/
+    const assetFiles = fs.existsSync(backendAssets) ? fs.readdirSync(backendAssets) : [];
+    const staticFiles = fs.existsSync(backendStatic) ? fs.readdirSync(backendStatic) : [];
+    const jsAsset = assetFiles.find(f => f.endsWith('.js'));
+    const jsRoot = staticFiles.find(f => f.endsWith('.js') && f.startsWith('index-'));
+    const scriptSrc = jsAsset ? `/static/assets/${jsAsset}` : (jsRoot ? `/static/${jsRoot}` : null);
+    if (scriptSrc) {
+      const scriptTag = `<script type="module" crossorigin src="${scriptSrc}"></script>`;
+      if (/<script[^>]*src=["'][^"']*\.js["'][^>]*><\/script>/i.test(html)) {
+        html = html.replace(/<script[^>]*src=["'][^"']*\.js["'][^>]*><\/script>/i, scriptTag);
+      } else {
+        html = html.replace(/<\/body>/i, `${scriptTag}\n</body>`);
+      }
+    }
+
+    fs.writeFileSync(indexPath, html, 'utf8');
+    console.log('Ensured cs.css + correct bundle JS in', indexPath);
   } catch (err) {
     console.error('Failed to patch index file:', indexPath, err);
   }
@@ -140,47 +224,21 @@ function patchIndexFile(indexPath) {
 
 function main() {
   // 1) Copy the build output (dist) into backend/static
+  removeMatchingFiles(backendStatic, name => /\.js$/.test(name) && name.startsWith('index-'));
   copyBuildToBackend();
-
-  // If index.html references /static/assets/..., but we flattened assets into backend/static,
-  // update index.html to point to the flattened paths (/static/<file>) so files resolve.
-  try {
-    const indexPath = path.join(backendStatic, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      let html = fs.readFileSync(indexPath, 'utf8');
-      // If references like /static/assets/<name> exist, rewrite to /static/<name>
-      html = html.replace(/href=\"\/static\/assets\/(.*?)\"/g, 'href="/static/$1"');
-      html = html.replace(/src=\"\/static\/assets\/(.*?)\"/g, 'src="/static/$1"');
-      // Fallback simple replace for any remaining occurrences (covers single quotes or other patterns)
-      html = html.replace(/\/static\/assets\//g, '/static/');
-
-      // Robust fix: if the HTML still references asset filenames that don't exist, detect first built JS/CSS
-      // in backendStatic root and point the index to those files. This handles various Vite output modes.
-      const files = fs.readdirSync(backendStatic);
-      const jsFile = files.find(f => /\.js$/.test(f) && !f.includes('service-worker'));
-      const cssFile = files.find(f => /\.css$/.test(f) && f !== 'assets' && f !== 'cs.css');
-      if (jsFile) {
-        html = html.replace(/<script[^>]*src=["'].*?["'][^>]*><\/script>/i, `<script type="module" crossorigin src="/static/${jsFile}"></script>`);
-      }
-      if (cssFile) {
-        // keep cs.css reference if present; but update main stylesheet link
-        html = html.replace(/<link[^>]*rel=["']stylesheet["'][^>]*href=["'].*?\.css["'][^>]*>/i, `<link rel="stylesheet" crossorigin href="/static/${cssFile}">`);
-      }
-      fs.writeFileSync(indexPath, html, 'utf8');
-      console.log('Patched', indexPath, 'asset paths to flattened /static/');
-    }
-  } catch (err) {
-    console.warn('Failed to patch index.html paths:', err.message);
-  }
 
   // 2) Copy the unified.css into backend/static/assets/cs.css
   copyUnified();
+  // 2b) Merge compiled bundle CSS into cs.css so it's the single stylesheet
+  mergeBundledCssIntoCs();
 
   // 3) Patch potential index files to ensure cs.css is referenced
   const backendIndex = path.resolve(backendStatic, 'index.html');
   const backendStaticFilesIndex = path.resolve(path.dirname(backendStatic), 'staticfiles', 'index.html');
   patchIndexFile(backendIndex);
   patchIndexFile(backendStaticFilesIndex);
+
+  syncStaticToStaticfiles();
 
   // 4) Optional sanity checks
   try {

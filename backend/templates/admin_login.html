@@ -1,45 +1,161 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Admin Login</title>
+    <title>Inventory Admin Login</title>
+    <link rel="stylesheet" href="{% static 'assets/cs.css' %}">
     <style>
-      /* Basic styles inspired by the provided design image */
-      body{font-family:Arial,Helvetica,sans-serif;background:#f3f6fb;margin:0;padding:0;display:flex;align-items:center;justify-content:center;height:100vh}
-      .card{width:900px;background:#fff;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,0.08);display:flex;overflow:hidden}
-      .left{flex:1;padding:48px;background:linear-gradient(135deg,#f7f8fb,#fff)}
-      .right{flex:1;padding:48px}
-      .logo{height:48px;margin-bottom:16px}
-      h2{margin:0 0 12px 0;font-size:20px;color:#333}
-      .input{width:100%;padding:12px 14px;margin:10px 0;border:1px solid #e6e9ef;border-radius:28px}
-      .btn{display:inline-block;background:#7b4bff;color:#fff;padding:12px 30px;border-radius:28px;border:0;cursor:pointer;margin-top:12px}
-      .meta{font-size:13px;color:#7b7f88;margin-top:10px}
-      .illustration{width:100%;height:220px;background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="220"></svg>') center/contain no-repeat}
-      .center{display:flex;flex-direction:column;justify-content:center;height:100%}
+      body{
+        margin:0;
+        min-height:100vh;
+        font-family:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+        background:linear-gradient(135deg,#eef2ff 0%,#f5f7fb 100%);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:24px;
+      }
+      .admin-card{
+        width:min(960px,100%);
+        background:#fff;
+        border-radius:32px;
+        box-shadow:0 40px 90px rgba(79,70,229,.15);
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        overflow:hidden;
+      }
+      .admin-visual{
+        padding:48px;
+        background:radial-gradient(circle at top,#f5f3ff,#eef2ff);
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        gap:18px;
+      }
+      .badge{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        padding:6px 16px;
+        border-radius:999px;
+        font-size:12px;
+        font-weight:600;
+        background:rgba(79,70,229,.1);
+        color:#4f46e5;
+        text-transform:uppercase;
+        letter-spacing:.2em;
+      }
+      .admin-visual h1{
+        margin:0;
+        font-size:32px;
+        color:#0f172a;
+      }
+      .admin-visual p{
+        margin:0;
+        color:#475569;
+        line-height:1.6;
+      }
+      .admin-panel{
+        padding:48px;
+        display:flex;
+        flex-direction:column;
+        gap:18px;
+      }
+      .admin-panel h2{
+        margin:0;
+        font-size:26px;
+        color:#0f172a;
+      }
+      form{
+        display:flex;
+        flex-direction:column;
+        gap:16px;
+      }
+      label{
+        display:flex;
+        flex-direction:column;
+        gap:6px;
+        font-size:14px;
+        font-weight:600;
+        color:#475569;
+      }
+      input{
+        border:1px solid #dbe2f0;
+        border-radius:16px;
+        padding:14px 16px;
+        font-size:16px;
+      }
+      button{
+        border:none;
+        border-radius:18px;
+        padding:14px 20px;
+        font-size:16px;
+        font-weight:600;
+        background:linear-gradient(135deg,#7c3aed,#6366f1);
+        color:#fff;
+        cursor:pointer;
+      }
+      .alert{
+        padding:12px 16px;
+        border-radius:12px;
+        background:#fef2f2;
+        color:#b91c1c;
+        font-weight:600;
+      }
+      .links{
+        display:flex;
+        flex-direction:column;
+        gap:6px;
+        font-size:14px;
+      }
+      .links a{
+        color:#6d28d9;
+        text-decoration:none;
+      }
+      @media(max-width:900px){
+        .admin-card{
+          grid-template-columns:1fr;
+        }
+        .admin-visual{
+          padding:32px;
+        }
+        .admin-panel{
+          padding:32px;
+        }
+      }
     </style>
   </head>
   <body>
-    <div class="card">
-      <div class="left">
-        <div class="center">
-          <img class="logo" src="/static/assets/logo.png" alt="logo" onerror="this.style.display='none'">
-          <div class="illustration"></div>
-        </div>
-      </div>
-      <div class="right">
-        <h2>Login as a Admin User</h2>
-        <form id="loginForm" method="post" action="/admin-login/submit/">
+    <main class="admin-card">
+      <section class="admin-visual">
+        <span class="badge">Inventory Platform</span>
+        <h1>Secure admin access</h1>
+        <p>Sign in with your administrator credentials to review customers, orders, suppliers, and finances from a single, secure workspace.</p>
+      </section>
+      <section class="admin-panel">
+        <h2>Admin login</h2>
+        {% if error %}
+          <div class="alert">{{ error }}</div>
+        {% endif %}
+        <form method="post" action="/admin-login/submit/">
           {% csrf_token %}
-          <input class="input" type="email" name="email" placeholder="Email address" required>
-          <input class="input" type="password" name="password" placeholder="Password" required>
-          <button class="btn" type="submit">LOGIN</button>
+          <label>
+            Email
+            <input type="email" name="email" placeholder="admin@company.com" required autofocus>
+          </label>
+          <label>
+            Password
+            <input type="password" name="password" placeholder="••••••••" required>
+          </label>
+          <button type="submit">Sign in</button>
         </form>
-        <div class="meta">Forgot your password? Contact the site administrator.</div>
-        <div style="margin-top:18px;">
-          <button id="logoutBtn" class="btn" style="background:#eee;color:#333" onclick="location.href='/admin-logout/'">LOGOUT</button>
+        <div class="links">
+          <a href="mailto:support@inventory.local?subject=Password%20reset">Forgot your password?</a>
+          <a href="mailto:security@inventory.local?subject=Admin%20access%20request">Request admin access</a>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   </body>
 </html>

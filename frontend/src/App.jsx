@@ -25,6 +25,15 @@ import SupplierLedger from './components/SupplierLedger'
 import ViewQuotation from './components/ViewQuotation'
 import AddQuotation from './components/AddQuotation'
 
+function Logout() {
+  const { logout } = useContext(AuthContext)
+  React.useEffect(() => {
+    logout('manual')
+    window.location.href = '/admin-login/'
+  }, [logout])
+  return <div>Logging out...</div>
+}
+
 // Ensure unified stylesheet is imported after component-level CSS so its rules take precedence
 import './styles/unified.css'
 
@@ -100,10 +109,13 @@ export default function App(){
     return ()=> window.removeEventListener('hashchange', onHash)
   },[])
 
+  const isAuthRoute = currentHash === '#/admin-login' || currentHash === '#/login'
+
   return (
-    <div className="app-shell">
-      <Sidebar currentHash={currentHash} />
-      <main className="main-content">
+    <div className={`app-shell ${isAuthRoute ? 'auth-shell' : ''}`}>
+      {!isAuthRoute && <Sidebar currentHash={currentHash} />}
+      <main className={`main-content ${isAuthRoute ? 'auth-main' : ''}`}>
+        {!isAuthRoute && (
         <nav style={{marginBottom:20, display: 'flex', flexWrap: 'wrap', gap: '12px', padding: '12px 0', borderBottom: '1px solid #e5e7eb'}}>
           <a href="#/admin-login">🔐 Admin Login</a> |
           <a href="#/">📊 Dashboard</a> |
@@ -114,7 +126,8 @@ export default function App(){
           <a href="#/payment-voucher">💳 Payment Voucher</a> |
           <a href="#/supplier-ledger">📈 Supplier Ledger</a>
         </nav>
-  {window.location.hash === '#/admin-login' ? <AdminLogin /> : window.location.hash === '#/login' ? <Login /> : window.location.hash === '#/add-customer' ? <AddCustomer setCustomers={setCustomers} /> : window.location.hash === '#/add-order' ? <AddOrder customers={customers} setCustomers={setCustomers} user={user} logout={logout} /> : window.location.hash === '#/products' ? <Products /> : window.location.hash === '#/suppliers' ? <Suppliers /> : window.location.hash === '#/expenses' ? <Expenses /> : window.location.hash === '#/view-orders' ? <ViewOrders /> : window.location.hash === '#/market-creditors' ? <MarketCreditors /> : window.location.hash === '#/payment-voucher' ? <PaymentVoucher /> : window.location.hash === '#/reporting-monthly' ? <ReportingMonthly /> : window.location.hash === '#/reporting-cash' ? <ReportingCash /> : window.location.hash === '#/opening-balance' ? <OpeningBalance /> : window.location.hash === '#/low-stock' ? <LowStock /> : window.location.hash === '#/users' ? <Users /> : window.location.hash === '#/customer-products' ? <CustomerProducts /> : window.location.hash === '#/view-customers' ? <ViewCustomers /> : window.location.hash === '#/supplier-ledger' ? <SupplierLedger /> : window.location.hash === '#/view-quotation' ? <ViewQuotation /> : window.location.hash === '#/add-quotation' ? <AddQuotation /> : (
+        )}
+  {window.location.hash === '#/admin-login' ? <AdminLogin /> : window.location.hash === '#/login' ? <Login /> : window.location.hash === '#/add-customer' ? <AddCustomer setCustomers={setCustomers} /> : window.location.hash === '#/add-order' ? <AddOrder customers={customers} setCustomers={setCustomers} user={user} logout={logout} /> : window.location.hash === '#/products' ? <Products /> : window.location.hash === '#/suppliers' ? <Suppliers /> : window.location.hash === '#/expenses' ? <Expenses /> : window.location.hash === '#/view-orders' ? <ViewOrders /> : window.location.hash === '#/market-creditors' ? <MarketCreditors /> : window.location.hash === '#/payment-voucher' ? <PaymentVoucher /> : window.location.hash === '#/reporting-monthly' ? <ReportingMonthly /> : window.location.hash === '#/reporting-cash' ? <ReportingCash /> : window.location.hash === '#/opening-balance' ? <OpeningBalance /> : window.location.hash === '#/low-stock' ? <LowStock /> : window.location.hash === '#/users' ? <Users /> : window.location.hash === '#/customer-products' ? <CustomerProducts /> : window.location.hash === '#/view-customers' ? <ViewCustomers /> : window.location.hash === '#/supplier-ledger' ? <SupplierLedger /> : window.location.hash === '#/view-quotation' ? <ViewQuotation /> : window.location.hash === '#/add-quotation' ? <AddQuotation /> : window.location.hash === '#/logout' ? <Logout /> : (
         <>
         <header className="dashboard-header">
           <h2>Dashboard</h2>
@@ -128,62 +141,69 @@ export default function App(){
           <StatCard number={String(orders.filter(o=>o.status==='working').length)} label="Working Orders" color="#ef4444" />
         </section>
 
-        <section className="tables-grid">
+        <section className="table-container">
           <div className="card table-card">
-            <h3>Latest Pending Orders</h3>
-            <table>
-              <thead>
-                <tr><th>Order ID</th><th>Customer</th><th>Total Bill</th><th>Date</th></tr>
-              </thead>
+            <h3>Dashboard Data</h3>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Amount/Bill</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {orders.slice(0,5).map(o=> (
-                    <tr key={o.id}><td>{o.id}</td><td>{o.customer_name}</td><td>{o.total_bill}</td><td>{o.order_date}</td></tr>
+                  {/* Pending Orders */}
+                  {orders.filter(o => o.status === 'pending').slice(0, 5).map(o => (
+                    <tr key={`pending-${o.id}`}>
+                      <td>Pending Order</td>
+                      <td>{o.id}</td>
+                      <td>{o.customer_name}</td>
+                      <td>{o.total_bill}</td>
+                      <td>{o.order_date}</td>
+                      <td>Pending</td>
+                    </tr>
+                  ))}
+                  {/* Completed Orders */}
+                  {orders.filter(o => o.status === 'completed').slice(0, 5).map(o => (
+                    <tr key={`completed-${o.id}`}>
+                      <td>Completed Order</td>
+                      <td>{o.id}</td>
+                      <td>{o.customer_name}</td>
+                      <td>{o.total_bill}</td>
+                      <td>{o.order_date}</td>
+                      <td>Completed</td>
+                    </tr>
+                  ))}
+                  {/* Market Creditors */}
+                  {creditors.slice(0, 5).map(c => (
+                    <tr key={`creditor-${c.id}`}>
+                      <td>Market Creditor</td>
+                      <td>{c.id}</td>
+                      <td>{c.customer_name}</td>
+                      <td>{c.balance}</td>
+                      <td>{c.order_date}</td>
+                      <td>Creditor</td>
+                    </tr>
+                  ))}
+                  {/* Latest Expenses */}
+                  {latestExpenses.slice(0, 5).map(e => (
+                    <tr key={`expense-${e.id}`}>
+                      <td>Expense</td>
+                      <td>{e.id}</td>
+                      <td>-</td>
+                      <td>{e.amount}</td>
+                      <td>{e.date}</td>
+                      <td>{e.type}</td>
+                    </tr>
                   ))}
                 </tbody>
-            </table>
-          </div>
-
-          <div className="card table-card">
-            <h3>Latest Completed Orders</h3>
-            <table>
-              <thead>
-                <tr><th>Order ID</th><th>Customer</th><th>Completed Date</th></tr>
-              </thead>
-              <tbody>
-                {orders.filter(o=> o.status==='completed').slice(0,5).map(o=> (
-                  <tr key={o.id}><td>{o.id}</td><td>{o.customer_name}</td><td>{o.order_date}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-        <section className="tables-grid">
-          <div className="card table-card">
-            <h3>Market Orders (Creditors)</h3>
-            <table>
-              <thead>
-                <tr><th>Order ID</th><th>Customer</th><th>Amount</th><th>Date</th></tr>
-              </thead>
-              <tbody>
-                {creditors.slice(0,5).map(c=> (
-                  <tr key={c.id}><td>{c.id}</td><td>{c.customer_name}</td><td>{c.balance}</td><td>{c.order_date}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="card table-card">
-            <h3>Latest Expenses</h3>
-            <table>
-              <thead>
-                <tr><th>Type</th><th>Amount</th><th>Date</th></tr>
-              </thead>
-              <tbody>
-                {latestExpenses.slice(0,5).map(e=> (
-                  <tr key={e.id}><td>{e.type}</td><td>{e.amount}</td><td>{e.date}</td></tr>
-                ))}
-              </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         </section>
 

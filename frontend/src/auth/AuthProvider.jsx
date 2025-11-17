@@ -1,5 +1,6 @@
 import React, {createContext, useEffect, useState, useCallback} from 'react'
 
+export const LOGOUT_REASON_KEY = 'auth:lastLogoutReason'
 export const AuthContext = createContext({ user: null, token: null, login: ()=>{}, logout: ()=>{} })
 
 export function AuthProvider({children}){
@@ -21,12 +22,19 @@ export function AuthProvider({children}){
   },[user])
 
   // ---- auth helpers: login / logout ----
-  const logout = useCallback(()=>{
+  const logout = useCallback((reason = 'manual')=>{
     // attempt server logout
     try{
       const t = localStorage.getItem('token')
       if(t){
         fetch('/api/auth/logout/', { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(()=>{})
+      }
+    }catch(e){}
+    try{
+      if(reason){
+        localStorage.setItem(LOGOUT_REASON_KEY, reason)
+      } else {
+        localStorage.removeItem(LOGOUT_REASON_KEY)
       }
     }catch(e){}
     setToken(null);
@@ -40,6 +48,7 @@ export function AuthProvider({children}){
     setToken(newToken);
     setUser(newUser);
     try{ localStorage.setItem('lastActivity', Date.now().toString()) }catch(e){}
+    try{ localStorage.removeItem(LOGOUT_REASON_KEY) }catch(e){}
   },[])
 
   // Validate token with server on mount/loading to ensure it's still the active session
@@ -59,7 +68,7 @@ export function AuthProvider({children}){
           }
         } else {
           // invalid or not active session
-          logout()
+          logout('invalid-session')
         }
       }catch(e){
         // network errors — be conservative and keep client state
@@ -112,9 +121,9 @@ export function AuthProvider({children}){
           const last = parseInt(localStorage.getItem('lastActivity') || '0', 10)
           if(last && Date.now() - last > TIMEOUT_MS){
             // expire session
-            logout()
-            // Redirect to admin login page so user must re-authenticate
-            try{ window.location.hash = '#/admin-login' }catch(e){}
+            logout('expired')
+            // Redirect to server-side admin login page so user must re-authenticate
+            try{ window.location.href = '/admin-login/' }catch(e){}
             // Optional: notify
             try{ if(typeof window !== 'undefined') window.alert('Session expired due to inactivity. Please log in again.') }catch(e){}
           }
