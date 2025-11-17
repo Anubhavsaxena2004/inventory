@@ -69,7 +69,7 @@ ROOT_URLCONF = 'inventory_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -130,12 +130,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# Make backend/static the STATIC_ROOT so built frontend files are served at /static/<file>
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-# Include your backend static folder where Vite puts built assets
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
+# We no longer use additional STATICFILES_DIRS for dev; built files are copied directly to STATIC_ROOT
+STATICFILES_DIRS = []
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 

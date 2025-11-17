@@ -1,11 +1,59 @@
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
+from django.shortcuts import render, redirect
 import json
 import os
 from settings_app.models import User
 from .auth_utils import generate_jwt, get_auth_payload_from_request
 from django.core.cache import cache
+
+
+# Admin-facing pages: simple server-side login/logout that integrate with
+# the existing API-style login logic. The form posts to `admin-login/submit/`.
+def admin_login_page(request):
+    # If already logged in (session), redirect to frontend root
+    if request.session.get('admin_user_id'):
+        return redirect('/')
+    return render(request, 'admin_login.html')
+
+
+def admin_login_action(request):
+    # Accept POST from the login form
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    email = request.POST.get('email')
+    password = request.POST.get('password')
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return render(request, 'admin_login.html', {'error': 'Invalid credentials'})
+    if user.password != password:
+        return render(request, 'admin_login.html', {'error': 'Invalid credentials'})
+    # enforce single active admin session
+    key = f"active_admin_{user.pk}"
+    active = cache.get(key)
+    if active:
+        return render(request, 'admin_login.html', {'error': 'Admin already logged in elsewhere'})
+    token = generate_jwt({'sub': user.pk, 'email': user.email, 'name': user.name, 'is_admin': True})
+    cache.set(key, token, timeout=24 * 3600)
+    # store minimal info in session so the admin page can show login state
+    request.session['admin_user_id'] = user.pk
+    request.session['admin_user_email'] = user.email
+    request.session['admin_token'] = token
+    # Redirect to frontend root (which will be served by the React app or other admin UI)
+    return redirect('/')
+
+
+def admin_logout_page(request):
+    # Clear cache key and session
+    user_id = request.session.get('admin_user_id')
+    if user_id:
+        cache.delete(f"active_admin_{user_id}")
+    request.session.pop('admin_user_id', None)
+    request.session.pop('admin_user_email', None)
+    request.session.pop('admin_token', None)
+    return redirect('/admin-login/')
 
 @csrf_exempt
 def login_view(request):
@@ -60,10 +108,19 @@ def health_check(request):
 
 class FrontendAppView(View):
     def get(self, request):
-        index_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'index.html')
-        if os.path.exists(index_path):
-            with open(index_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            return HttpResponse(content, content_type='text/html')
-        return HttpResponse("index.html not found", status=404)
+        # Try multiple locations for index.html so the app works whether built into
+        # `backend/static` or `backend/staticfiles`.
+        base = os.path.dirname(__file__)
+        candidates = [
+            os.path.join(base, '..', 'static', 'index.html'),
+            os.path.join(base, '..', 'staticfiles', 'index.html'),
+            os.path.join(base, '..', 'static', 'index.html'),
+        ]
+        for p in candidates:
+            p = os.path.normpath(p)
+            if os.path.exists(p):
+                with open(p, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                return HttpResponse(content, content_type='text/html')
+        return HttpResponse("index.html not found; looked in: " + ",".join(candidates), status=404)
 

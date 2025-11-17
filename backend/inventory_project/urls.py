@@ -11,6 +11,9 @@ from . import views as root_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('admin-login/', root_views.admin_login_page),
+    path('admin-login/submit/', root_views.admin_login_action),
+    path('admin-logout/', root_views.admin_logout_page),
     path('api/dashboard/', include('dashboard.urls')),
     path('api/orders/', include('orders.urls')),
     path('api/customers/', include('customers.urls')),
