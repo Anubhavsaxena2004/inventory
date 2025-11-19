@@ -226,6 +226,15 @@ nav {
 .tables-grid { display: grid; gap: var(--space-8); margin-bottom: var(--space-8); }
 @media (min-width: 768px) { .tables-grid { grid-template-columns: 1fr 1fr; } }
 
+.table-container {
+  max-height: 70vh;
+  overflow-y: auto;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--card-border);
+  background: var(--bg-primary);
+}
+
 .table-card {
   overflow: hidden;
   border-radius: var(--radius-xl);
@@ -405,3 +414,68 @@ input::placeholder, textarea::placeholder { color: var(--muted-2); opacity: 1; }
 .error { color: var(--error-600, #dc2626); font-size: .9rem; margin-bottom: 8px; }
 
 /* End of unified CSS */
+/* === Table override to fix leftover conflicts (place at END of unified.css) === */
+
+/* Ensure the main table container uses one layout and doesn't add extra padding */
+.table-container.card {
+  padding: 1rem;         /* consistent card padding */
+  margin: 0 0 1.25rem 0;
+  box-sizing: border-box;
+}
+
+/* Ensure single scroll container and sticky header works */
+.table-wrap {
+  max-height: 64vh !important;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px !important;
+}
+
+/* Make table flexible: allow columns to size, but don't let content break layout */
+.table-wrap table {
+  width: 100% !important;
+  min-width: 680px; /* adjust lower if you have fewer columns */
+  border-collapse: collapse !important;
+  table-layout: auto !important;
+}
+
+/* Sticky header fix: higher z-index so it stays above other content */
+.table-wrap thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1100 !important;
+}
+
+/* Remove unexpected wrapping from cells; keep truncation on long text */
+.table-wrap tbody td {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  vertical-align: middle !important;
+}
+
+/* Make sure the header colors are consistent */
+.table-wrap thead th {
+  background: var(--table-head, #0f1724) !important;
+  color: var(--white, #fff) !important;
+}
+
+/* Improve accessibility on small screens: allow the table to be scrolled horizontally */
+@media (max-width: 720px) {
+  .table-wrap table { min-width: 600px; }
+  .table-wrap tbody td { white-space: nowrap; font-size: .95rem; }
+}
+
+/* A helper to show full text on hover for truncated cells */
+.table-wrap tbody td .cell-truncate[title] {
+  cursor: help;
+}
+
+/* A helper to show full text on hover for truncated cells */
+.table-wrap tbody td .cell-truncate[title]:hover {
+  overflow: visible !important;
+  white-space: normal !important;
+  text-overflow: clip !important;
+  max-width: none !important;
+}

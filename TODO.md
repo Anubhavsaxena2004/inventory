@@ -1,4 +1,6 @@
-- [ ] Modify dashboard layout to single scrollable table container
-- [ ] Add logout API endpoint in settings_app
-- [ ] Update settings URLs to include logout
+- [x] Modify dashboard layout to single scrollable table container
+- [x] Add logout API endpoint in settings_app
+- [x] Update settings URLs to include logout
+- [x] Update sidebar to include logout
+- [x] Update App.jsx to handle logout route
 - [ ] Test the changes
