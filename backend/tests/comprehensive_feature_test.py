@@ -11,19 +11,20 @@ from datetime import datetime, date, timedelta
 
 BASE_URL = "http://127.0.0.1:8000"
 
-def test_api_endpoint(endpoint, method="GET", data=None, expected_status=200, description=""):
+def test_api_endpoint(endpoint, method="GET", data=None, expected_status=200, description="", headers=None):
     """Test a single API endpoint with detailed logging"""
     url = f"{BASE_URL}{endpoint}"
     
     try:
+        request_headers = headers or {}
         if method == "GET":
-            response = requests.get(url)
+            response = requests.get(url, headers=request_headers)
         elif method == "POST":
-            response = requests.post(url, json=data)
+            response = requests.post(url, json=data, headers=request_headers)
         elif method == "PUT":
-            response = requests.put(url, json=data)
+            response = requests.put(url, json=data, headers=request_headers)
         elif method == "DELETE":
-            response = requests.delete(url)
+            response = requests.delete(url, headers=request_headers)
         else:
             return False, f"Unsupported method: {method}"
         
@@ -123,7 +124,14 @@ def test_order_features():
         "unit_price": 25.50
     }
     
-    success, result = test_api_endpoint("/api/settings/products/", "POST", product_data, 201, headers={'X-Admin': 'true'})
+    success, result = test_api_endpoint(
+        "/api/settings/products/",
+        "POST",
+        product_data,
+        201,
+        "Create test product",
+        headers={'X-Admin': 'true'}
+    )
     if not success:
         print("  ❌ Failed to create test product for orders")
         return False
@@ -137,8 +145,8 @@ def test_order_features():
     # Test order features
     features = [
         ("/api/orders/view/", "View Orders", "Filter by customer, status, date range"),
-        ("/api/orders/creditors/", "Market Creditors", "Total market credit, creditor list"),
-        ("/api/orders/payment-vouchers/", "Payment Vouchers", "Payment voucher list")
+        ("/api/orders/market-creditors/", "Market Creditors", "Total market credit, creditor list"),
+        ("/api/orders/payment-voucher/", "Payment Vouchers", "Payment voucher list")
     ]
     
     results = []
@@ -151,6 +159,7 @@ def test_order_features():
         results.append(success)
     
     # Test adding an order
+    today = date.today()
     order_data = {
         "order_type": "cash",
         "customer": customer_id,
@@ -268,7 +277,7 @@ def test_expense_features():
     print("\n💰 Testing Expense Management Features...")
     
     features = [
-        ("/api/expense/view/", "Expense List", "Filter by date range, list expenses"),
+        ("/api/expense/list/", "Expense List", "Filter by date range, list expenses"),
     ]
     
     results = []
@@ -288,7 +297,13 @@ def test_expense_features():
         "date": str(date.today())
     }
     
-    success, result = test_api_endpoint("/api/expense/add/", "POST", expense_data, 201, "Add Expense")
+    success, result = test_api_endpoint(
+        "/api/expense/new/",
+        "POST",
+        expense_data,
+        201,
+        "Add Expense"
+    )
     status = "✅ PASS" if success else "❌ FAIL"
     print(f"  {status} Add Expense")
     if not success:
