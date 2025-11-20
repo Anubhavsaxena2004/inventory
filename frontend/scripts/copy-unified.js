@@ -21,12 +21,12 @@ function copyBuildToBackend() {
     return;
   }
 
-  // clear only specific js/css files first (avoid deleting non-build files)
+  // clear only specific js files and css files (but keep cs.css)
   ensureDir(backendStatic);
-  // remove old hashed index-*.js and asset js/css in backend/static root and backend/assets
-  removeMatchingFiles(backendStatic, name => /\.js$/.test(name) || /\.css$/.test(name));
+  // remove old hashed index-*.js and asset js files; keep cs.css which is our canonical stylesheet
+  removeMatchingFiles(backendStatic, name => /\.js$/.test(name) || (/\.css$/.test(name) && name !== 'cs.css'));
   ensureDir(backendAssets);
-  removeMatchingFiles(backendAssets, name => /\.js$/.test(name) || /\.css$/.test(name));
+  removeMatchingFiles(backendAssets, name => /\.js$/.test(name) || (/\.css$/.test(name) && name !== 'cs.css'));
 
   // copy new build
   // prefer dist/assets (Vite default produces 'assets' inside dist)
@@ -46,6 +46,15 @@ function copyBuildToBackend() {
   if (!copied) {
     copyDirSync(viteDist, backendStatic);
     copied = true;
+  }
+
+  // After copying, remove any generated CSS files that Vite created so we only serve `cs.css`.
+  // This ensures the build's hashed CSS doesn't override our unified `cs.css`.
+  try {
+    removeMatchingFiles(backendAssets, name => (/\.css$/.test(name) && name !== 'cs.css'));
+    removeMatchingFiles(backendStatic, name => (/\.css$/.test(name) && name !== 'cs.css'));
+  } catch (err) {
+    console.warn('Failed to clean generated CSS files:', err && err.message);
   }
 
   // copy dist/index.html to backend/static/index.html so Django can serve it if needed
