@@ -96,14 +96,19 @@ DATABASES = {
 
 # If a DATABASE_URL env var is provided (e.g. Render Postgres), use it in production.
 # This allows the app to connect to the Render managed Postgres instance.
-DATABASE_URL = os.environ.get('DATABASE_URL')
-if DATABASE_URL:
-    try:
-        import dj_database_url
-        DATABASES['default'] = dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=True)
-    except Exception:
-        # If dj-database-url isn't installed or parsing fails, keep the default sqlite config
-        pass
+# Use DATABASE_URL from environment when available; otherwise fall back to the
+# Render external database URL you provided. Hardcoding credentials in source
+# is not recommended for production, but you asked to set these values here.
+DATABASE_URL = os.environ.get('DATABASE_URL') or (
+    'postgresql://admin:ONbF7ApCJs2cjRMsRiZpx1tVLN72Lpup'
+    '@dpg-d4fhjl2dbo4c73c23vog-a.oregon-postgres.render.com/inventory_c6ls'
+)
+try:
+    import dj_database_url
+    DATABASES['default'] = dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=True)
+except Exception:
+    # If dj-database-url isn't installed or parsing fails, keep the default sqlite config
+    pass
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
