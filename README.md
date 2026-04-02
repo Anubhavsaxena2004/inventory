@@ -1,4 +1,4 @@
-# Inventory Management System
+# Inventory Management System for AN
 
 A comprehensive inventory management system built with Django REST Framework backend and React frontend.
 
